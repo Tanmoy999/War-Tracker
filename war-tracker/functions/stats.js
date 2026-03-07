@@ -144,6 +144,9 @@ async function getStatsData() {
     militaryAssets: staticData.militaryAssets,
     timeline: staticData.timeline,
     regional: staticData.regional,
+    humanitarian: staticData.humanitarian,
+    economic: staticData.economic,
+    newsFeed: staticData.newsFeed,
     sources: staticData.sources,
     newsArticles: realData.articles.slice(0, 10) || []
   };
