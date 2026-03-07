@@ -1,12 +1,11 @@
-const CACHE_NAME = 'conflict-tracker-v1';
+const CACHE_NAME = 'conflict-tracker-v3';
 const ASSETS = [
   '/',
   '/index.html',
+  '/styles.css',
+  '/app.js',
   '/data/stats.json',
-  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;700&display=swap',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'
+  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;700&display=swap'
 ];
 
 self.addEventListener('install', e => {
@@ -20,9 +19,23 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('stats.json')) {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  // Network-first for HTML, CSS, JS, and data — always get fresh content
+  if (e.request.url.includes('stats') || 
+      e.request.url.endsWith('.html') || 
+      e.request.url.endsWith('.css') || 
+      e.request.url.endsWith('.js') ||
+      e.request.url.endsWith('/')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
   } else {
+    // Cache-first for static assets (fonts, images)
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
   }
 });
