@@ -36,6 +36,36 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="lib/leaflet/leaflet.css"/>
 <link rel="stylesheet" href="styles.css"/>
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX', {
+    'anonymize_ip': true,
+    'allow_google_signals': false,
+    'allow_ad_personalization_signals': false
+  });
+  
+  // Track viewer count
+  function trackViewerMetrics() {
+    const viewerEl = document.getElementById('viewerCount');
+    if (viewerEl) {
+      gtag('event', 'viewer_count_update', {
+        'viewer_count': parseInt(viewerEl.textContent.replace(/,/g, ''))
+      });
+    }
+  }
+  
+  // Track sections viewed
+  function trackSectionView(sectionName) {
+    gtag('event', 'view_section', {
+      'section_name': sectionName
+    });
+  }
+</script>
 </head>
 <body>
 

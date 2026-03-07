@@ -110,15 +110,36 @@ document.addEventListener('keydown', e => {
 // ─── SHARING ─────────────────────────────────────────────
 function shareCard(label, value) {
   const text = `${label}: ${value} — Conflict Tracker (Iran·Israel·USA 2026)\n${window.location.href}`;
+  // Track share event
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'share', {
+      'method': 'native',
+      'content_type': 'stat',
+      'item_id': label
+    });
+  }
   if (navigator.share) { navigator.share({title:'Conflict Tracker',text,url:window.location.href}).catch(()=>{}); }
   else { navigator.clipboard.writeText(text).then(()=>showToast('📋 Copied to clipboard!')); }
 }
-function shareToTwitter() { window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Live conflict tracker — Iran·Israel·USA 2026 '+window.location.href),'_blank'); }
-function shareToReddit() { window.open('https://reddit.com/submit?url='+encodeURIComponent(window.location.href)+'&title='+encodeURIComponent('Live Conflict Tracker — Iran·Israel·USA 2026'),'_blank'); }
-function shareToTelegram() { window.open('https://t.me/share/url?url='+encodeURIComponent(window.location.href)+'&text='+encodeURIComponent('Live conflict tracker — Iran·Israel·USA 2026'),'_blank'); }
-function copyLink() { navigator.clipboard.writeText(window.location.href).then(()=>showToast('🔗 Link copied!')); }
+function shareToTwitter() { 
+  if (typeof gtag !== 'undefined') gtag('event', 'share', {'method': 'twitter'});
+  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Live conflict tracker — Iran·Israel·USA 2026 '+window.location.href),'_blank'); 
+}
+function shareToReddit() { 
+  if (typeof gtag !== 'undefined') gtag('event', 'share', {'method': 'reddit'});
+  window.open('https://reddit.com/submit?url='+encodeURIComponent(window.location.href)+'&title='+encodeURIComponent('Live Conflict Tracker — Iran·Israel·USA 2026'),'_blank'); 
+}
+function shareToTelegram() { 
+  if (typeof gtag !== 'undefined') gtag('event', 'share', {'method': 'telegram'});
+  window.open('https://t.me/share/url?url='+encodeURIComponent(window.location.href)+'&text='+encodeURIComponent('Live conflict tracker — Iran·Israel·USA 2026'),'_blank'); 
+}
+function copyLink() { 
+  if (typeof gtag !== 'undefined') gtag('event', 'share', {'method': 'copy_link'});
+  navigator.clipboard.writeText(window.location.href).then(()=>showToast('🔗 Link copied!')); 
+}
 function embedCard(statId) {
   const code = `<iframe src="${window.location.origin}/embed.html?stat=${statId}" width="280" height="180" frameborder="0"></iframe>`;
+  if (typeof gtag !== 'undefined') gtag('event', 'embed', {'stat_id': statId});
   navigator.clipboard.writeText(code).then(()=>showToast('📦 Embed code copied!'));
 }
 
@@ -542,6 +563,13 @@ function render(data) {
   if (m.viewers) {
     viewerCount = m.viewers;
     updateViewerDisplay();
+    // Track viewer count to GA
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'page_view', {
+        'viewers': viewerCount,
+        'event_day': m.currentDay
+      });
+    }
   }
   
   document.getElementById('globalStats').innerHTML = buildGlobalStats(data.globalStats);
@@ -569,14 +597,31 @@ function render(data) {
 // ─── DATA LOADING ────────────────────────────────────────
 async function loadData() {
   try {
+    const startTime = performance.now();
     const res = await fetch(DATA_URL + '?t=' + Date.now());
     if (!res.ok) throw new Error('Network error');
     const data = await res.json();
+    const loadTime = performance.now() - startTime;
+    
+    // Track data load performance
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'data_load', {
+        'load_time_ms': Math.round(loadTime),
+        'data_size': new Blob([JSON.stringify(data)]).size
+      });
+    }
+    
     render(data);
     document.getElementById('fetchTime').textContent = new Date().toLocaleTimeString();
   } catch(err) {
     console.error('Failed to load data:', err);
     document.getElementById('fetchTime').textContent = 'Failed to load — retrying...';
+    // Track error
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'data_load_error', {
+        'error_message': err.message
+      });
+    }
   }
 }
 
