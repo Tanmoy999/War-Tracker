@@ -1,0 +1,10 @@
+[build]
+  publish = "war-tracker/war-tracker"
+  command = ""
+  functions = "war-tracker/functions"
+
+# Redirect rules
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
