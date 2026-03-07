@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 
-Sitemap: https://conflicttracker.io/sitemap.xml
+Sitemap: https://war-tracker-me.netlify.app/sitemap.xml
