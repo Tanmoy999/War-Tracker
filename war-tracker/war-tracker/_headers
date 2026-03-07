@@ -1,0 +1,11 @@
+/data/stats.json
+  Cache-Control: public, max-age=30, s-maxage=30
+  Access-Control-Allow-Origin: *
+
+/*.html
+  Cache-Control: public, max-age=60
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+
+/admin/*
+  X-Robots-Tag: noindex
