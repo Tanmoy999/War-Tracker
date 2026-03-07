@@ -19,6 +19,36 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+// ─── DONATE (PayPal) ─────────────────────────────────────
+let selectedAmount = 25;
+function selectAmount(amount, btn) {
+  selectedAmount = amount;
+  document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const ci = document.getElementById('customAmount');
+  if (ci) ci.value = '';
+  updatePayPalButton();
+}
+function clearAmountSelection() {
+  document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+  const val = document.getElementById('customAmount')?.value;
+  if (val && parseInt(val) > 0) selectedAmount = parseInt(val);
+  updatePayPalButton();
+}
+function updatePayPalButton() {
+  const btn = document.getElementById('paypalBtn');
+  if (!btn) return;
+  btn.href = 'https://paypal.me/TBhowmick3/' + selectedAmount;
+  const svg = btn.querySelector('svg');
+  if (svg) btn.innerHTML = svg.outerHTML + '\n          Donate $' + selectedAmount + ' via PayPal';
+}
+function updatePayPalLink() {
+  const custom = document.getElementById('customAmount')?.value;
+  if (custom && parseInt(custom) > 0) selectedAmount = parseInt(custom);
+  const btn = document.getElementById('paypalBtn');
+  if (btn) btn.href = 'https://paypal.me/TBhowmick3/' + selectedAmount;
+}
+
 function animateNumber(el, target) {
   const num = parseInt(target.replace(/[^0-9]/g,''));
   if (isNaN(num) || num === 0) { el.textContent = target; return; }
