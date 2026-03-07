@@ -1,12 +1,15 @@
 // Real-time statistics data store
 // This file contains the actual data values that get merged with live news
 
+let globalViewers = parseInt(process.env.VIEWER_COUNT || '0', 10) || 847;
+
 module.exports = {
   lastUpdated: new Date().toISOString(),
   meta: {
     conflictStart: "2025-06-13",
     phase2Start: "2026-02-28",
     currentDay: 6,
+    viewers: globalViewers,
     operationNames: ["Operation Roaring Lion", "Operation Epic Fury", "Operation True Promise IV"],
   },
   globalStats: [

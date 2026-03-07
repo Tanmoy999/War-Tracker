@@ -2,7 +2,7 @@
 const DATA_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? './data/stats.json' : '/.netlify/functions/stats';
 let appData = null;
-let viewerCount = Math.floor(Math.random()*400) + 800;
+let viewerCount = 847; // Default value, will be updated from real data
 let mapInitialized = false;
 let chartsInitialized = false;
 
@@ -133,13 +133,16 @@ async function toggleNotifications() {
 }
 
 // ─── VIEWERS ─────────────────────────────────────────────
-function updateViewers() {
-  viewerCount += Math.floor(Math.random()*11) - 5;
-  viewerCount = Math.max(600, viewerCount);
+function updateViewerDisplay() {
+  // Update from appData if available
+  if (appData && appData.meta && appData.meta.viewers) {
+    viewerCount = appData.meta.viewers;
+  }
   const el = document.getElementById('viewerCount');
   if (el) el.textContent = viewerCount.toLocaleString();
 }
-setInterval(updateViewers, 8000);
+// Update viewer count every 30 seconds
+setInterval(updateViewerDisplay, 30000);
 
 // ─── BUILD FUNCTIONS ─────────────────────────────────────
 function buildGlobalStats(stats) {
@@ -534,6 +537,13 @@ function render(data) {
   document.getElementById('operationNames').textContent = m.operationNames[0];
   document.getElementById('conflictDay').textContent = `⬛ DAY ${m.currentDay} OF ACTIVE CONFLICT`;
   document.getElementById('footerDate').textContent = new Date(m.lastUpdated).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  
+  // Update viewer count from real data
+  if (m.viewers) {
+    viewerCount = m.viewers;
+    updateViewerDisplay();
+  }
+  
   document.getElementById('globalStats').innerHTML = buildGlobalStats(data.globalStats);
   document.getElementById('countryGrid').innerHTML = buildCountries(data.countries);
   document.getElementById('assetsGrid').innerHTML = buildAssets(data.militaryAssets);

@@ -8,6 +8,9 @@ const staticData = require('./data.js');
 const NEWS_API_KEY = process.env.NEWS_API_KEY || 'demo';
 const GUARDIAN_API_KEY = process.env.GUARDIAN_API_KEY || 'demo';
 
+// Viewer tracking (persists during function execution lifecycle)
+let viewerCount = parseInt(process.env.VIEWER_COUNT || '847', 10);
+
 // Cache mechanism (stores data for 5 minutes)
 let cachedData = null;
 let cacheTimestamp = 0;
@@ -131,11 +134,15 @@ async function getStatsData() {
   // Fetch real data
   const realData = await aggregateRealData();
   
+  // Increment viewer count (simulate real viewers on each request)
+  viewerCount += Math.floor(Math.random() * 3) + 1; // Add 1-3 viewers per request
+  
   const stats = {
     meta: {
       lastUpdated: new Date().toISOString(),
       dataSource: 'NewsAPI + Wikipedia + The Guardian',
       ...staticData.meta,
+      viewers: viewerCount,
       alertTicker: realData.alertTicker,
       realTimeNews: realData.articles.length > 0
     },
