@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta name="google-site-verification" content="jaZ-xM6RQ-O9qNEwWlR8X0Wp2q0pyey9nd8b94SSZiM" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="About Conflict Tracker — Methodology, data sources, team, and mission behind the live Iran-Israel-US conflict tracking portal."/>
+<meta name="keywords" content="about conflict tracker, war data methodology, conflict data sources"/>
+
+<!-- Open Graph -->
+<meta property="og:title" content="About — Conflict Tracker"/>
+<meta property="og:description" content="Learn about the methodology, data sources, and mission behind the Conflict Tracker portal."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://war-tracker-me.netlify.app/about.html"/>
+<meta property="og:image" content="https://war-tracker-me.netlify.app/og-image.png"/>
+
+<title>About — Conflict Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  .about-page { max-width: 860px; margin: 0 auto; padding: 40px 40px 60px; }
+  .about-hero { text-align: center; padding: 60px 0 40px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+  .about-hero h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 0.95; letter-spacing: 0.04em; }
+  .about-hero h1 .accent { color: var(--red); }
+  .about-hero .tagline { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; color: var(--muted); letter-spacing: 0.15em; margin-top: 16px; text-transform: uppercase; }
+
+  .about-section { margin-bottom: 48px; }
+  .about-section h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 0.06em; color: var(--white); margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--red); display: inline-block; }
+  .about-section p, .about-section li { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.92rem; line-height: 1.8; color: var(--muted); margin-bottom: 12px; }
+  .about-section ul { list-style: none; padding: 0; }
+  .about-section ul li { padding: 8px 0 8px 24px; position: relative; }
+  .about-section ul li::before { content: '▸'; position: absolute; left: 0; color: var(--red); font-weight: bold; }
+
+  .methodology-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 20px; }
+  .method-card { background: var(--panel); border: 1px solid var(--border); padding: 24px; transition: border-color 0.2s, transform 0.2s; }
+  .method-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+  .method-card .method-icon { font-size: 2rem; margin-bottom: 12px; display: block; }
+  .method-card h3 { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--white); margin-bottom: 8px; }
+  .method-card p { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--muted); line-height: 1.7; margin: 0; }
+
+  .source-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 16px; }
+  .source-item { background: var(--panel); border: 1px solid var(--border); padding: 14px 18px; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--cyan); display: flex; align-items: center; gap: 10px; transition: border-color 0.2s; }
+  .source-item:hover { border-color: rgba(72,202,228,0.3); }
+  .source-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); flex-shrink: 0; }
+
+  .disclaimer-box { background: rgba(230,57,70,0.08); border: 1px solid rgba(230,57,70,0.25); padding: 24px; margin-top: 20px; }
+  .disclaimer-box h3 { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--red); margin-bottom: 10px; }
+  .disclaimer-box p { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--muted); line-height: 1.8; margin: 0; }
+
+  .contact-box { background: var(--panel); border: 1px solid var(--border); padding: 24px; margin-top: 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .contact-box a { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--cyan); text-decoration: none; padding: 8px 16px; border: 1px solid rgba(72,202,228,0.3); transition: all 0.2s; }
+  .contact-box a:hover { background: rgba(72,202,228,0.1); color: var(--white); }
+
+  .back-link { display: inline-flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--cyan); text-decoration: none; padding: 10px 20px; border: 1px solid rgba(72,202,228,0.3); transition: all 0.2s; margin: 20px 40px; }
+  .back-link:hover { background: rgba(72,202,228,0.1); }
+
+  @media (max-width: 640px) {
+    .about-page { padding: 20px; }
+    .back-link { margin: 12px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Alert Bar -->
+<div class="alert-bar">
+  <div class="pulse"></div>
+  <div class="ticker-wrap"><div class="ticker">⚠ CONFLICT TRACKER — Independent conflict data portal tracking the 2025-2026 Iran-Israel-US war</div></div>
+</div>
+
+<a href="index.html" class="back-link">← Back to Live Dashboard</a>
+
+<div class="about-page">
+
+  <!-- Hero -->
+  <div class="about-hero">
+    <h1>ABOUT<br/><span class="accent">CONFLICT TRACKER</span></h1>
+    <div class="tagline">Independent · Open Source · Real-Time Data</div>
+  </div>
+
+  <!-- Mission -->
+  <div class="about-section">
+    <h2>Our Mission</h2>
+    <p>Conflict Tracker is an independent, open-source data portal that provides real-time statistics, interactive visualizations, and a comprehensive timeline of the 2025-2026 Iran-Israel-United States conflict.</p>
+    <p>Our goal is to make conflict data accessible, transparent, and understandable for journalists, researchers, educators, and the general public. In times of war, information is often fragmented, contradictory, and politicized. We aggregate data from multiple credible sources to present the most accurate picture possible.</p>
+    <p>We believe that clear, unbiased data can help people understand the true human cost of war — and ultimately contribute to accountability and informed public discourse.</p>
+  </div>
+
+  <!-- Methodology -->
+  <div class="about-section">
+    <h2>Methodology</h2>
+    <p>Our data compilation process follows strict verification protocols:</p>
+    <div class="methodology-grid">
+      <div class="method-card">
+        <span class="method-icon">🔍</span>
+        <h3>Multi-Source Verification</h3>
+        <p>Every data point is cross-referenced across at least 2-3 independent sources before publication. We prioritize UN agencies, human rights organizations, and verified journalist reports.</p>
+      </div>
+      <div class="method-card">
+        <span class="method-icon">📊</span>
+        <h3>Conservative Estimates</h3>
+        <p>When sources disagree, we use the most conservative (lowest) confirmed figure. Numbers marked with "+" indicate that real figures are likely higher.</p>
+      </div>
+      <div class="method-card">
+        <span class="method-icon">🔄</span>
+        <h3>Continuous Updates</h3>
+        <p>Data refreshes automatically every 60 seconds. Our editorial team reviews and updates source data multiple times daily during active conflict periods.</p>
+      </div>
+      <div class="method-card">
+        <span class="method-icon">⚖️</span>
+        <h3>Impartiality</h3>
+        <p>We track all sides equally — Iranian, Israeli, American, and regional casualties. No side is minimized or amplified. Raw data speaks for itself.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Sources -->
+  <div class="about-section">
+    <h2>Data Sources</h2>
+    <p>We aggregate and cross-reference data from the following organizations and agencies:</p>
+    <div class="source-grid">
+      <div class="source-item"><div class="dot"></div>Al Jazeera</div>
+      <div class="source-item"><div class="dot"></div>Wikipedia — 2026 Iran Conflict</div>
+      <div class="source-item"><div class="dot"></div>Hengaw Organization for Human Rights</div>
+      <div class="source-item"><div class="dot"></div>CENTCOM (US Central Command)</div>
+      <div class="source-item"><div class="dot"></div>Israeli Ministry of Health</div>
+      <div class="source-item"><div class="dot"></div>Iranian Red Crescent Society</div>
+      <div class="source-item"><div class="dot"></div>Lebanese Health Ministry</div>
+      <div class="source-item"><div class="dot"></div>IAEA (Nuclear Watchdog)</div>
+      <div class="source-item"><div class="dot"></div>UN OCHA</div>
+      <div class="source-item"><div class="dot"></div>Reuters / AP / AFP</div>
+    </div>
+  </div>
+
+  <!-- What We Track -->
+  <div class="about-section">
+    <h2>What We Track</h2>
+    <ul>
+      <li><strong style="color:var(--white)">Casualties</strong> — Deaths and injuries across all countries and sides (civilian and military separated)</li>
+      <li><strong style="color:var(--white)">Military Operations</strong> — Strikes, munitions deployed, assets destroyed, and operations named</li>
+      <li><strong style="color:var(--white)">Humanitarian Impact</strong> — Displaced populations, infrastructure damage, refugee flows, and aid access</li>
+      <li><strong style="color:var(--white)">Economic Impact</strong> — Oil price shocks, trade disruptions, economic damage estimates</li>
+      <li><strong style="color:var(--white)">Regional Spillover</strong> — Impact on Gulf States, Lebanon, Iraq, Red Sea shipping</li>
+      <li><strong style="color:var(--white)">Timeline</strong> — Chronological event tracker from the initial 2025 12-Day War through the current Phase 2</li>
+      <li><strong style="color:var(--white)">GeographicData</strong> — Interactive map with geolocated strikes, bases, and conflict zones</li>
+    </ul>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="about-section">
+    <div class="disclaimer-box">
+      <h3>⚠ Important Disclaimer</h3>
+      <p>This portal is <strong style="color:var(--white)">informational only</strong>. Casualty figures are contested by all parties and change rapidly during active conflict. We do not claim absolute accuracy — we present the best available data from credible sources. Numbers should be treated as estimates. This project is not affiliated with any government, military, or political organization. We do not endorse any side in this conflict.</p>
+    </div>
+  </div>
+
+  <!-- Contact -->
+  <div class="about-section">
+    <h2>Contact & Contribute</h2>
+    <p>Conflict Tracker is open source. If you have data corrections, source suggestions, or want to contribute, reach out:</p>
+    <div class="contact-box">
+      <a href="https://github.com/Tanmoy999/War-Tracker" target="_blank">📂 GitHub Repository</a>
+      <a href="mailto:contact@conflicttracker.io">📧 Email Us</a>
+      <a href="https://twitter.com/intent/tweet?text=Check+out+@ConflictTracker" target="_blank">𝕏 Twitter / X</a>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <span>⚠ Data compiled from public sources. Casualty figures contested. This portal is informational only.</span>
+  <span>conflicttracker.io · <a href="index.html" style="color:var(--cyan);text-decoration:none;">← Live Dashboard</a></span>
+</footer>
+
+<script>
+  // Theme persistence
+  const saved = localStorage.getItem('ct_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+</script>
+
+</body>
+</html>

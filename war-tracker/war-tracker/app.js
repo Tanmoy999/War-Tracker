@@ -192,42 +192,264 @@ function buildRegional(regions) {
     </div>`).join('');
 }
 
-// ─── MAP ─────────────────────────────────────────────────
+// ─── HUMANITARIAN ────────────────────────────────────────
+function buildHumanitarian(humanitarian) {
+  const el = document.getElementById('humanSummary');
+  if (el) el.textContent = humanitarian.summary;
+
+  const grid = document.getElementById('humanStats');
+  if (grid) {
+    grid.innerHTML = humanitarian.stats.map((s, i) => `
+      <div class="human-stat-card" style="animation-delay:${i * 0.05}s">
+        <span class="h-icon">${s.icon}</span>
+        <div class="h-num ${s.color}">${s.value}</div>
+        <div class="h-label">${s.label}</div>
+        <div class="h-desc">${s.desc}</div>
+        <div class="h-source">${s.source}</div>
+      </div>`).join('');
+  }
+
+  const infraGrid = document.getElementById('infraGrid');
+  if (infraGrid && humanitarian.infrastructure) {
+    const maxTotal = Math.max(...humanitarian.infrastructure.map(i => i.destroyed + i.damaged));
+    infraGrid.innerHTML = humanitarian.infrastructure.map(i => {
+      const total = i.destroyed + i.damaged;
+      const destroyedPct = (i.destroyed / maxTotal * 100).toFixed(1);
+      const damagedPct = (i.damaged / maxTotal * 100).toFixed(1);
+      return `
+      <div class="infra-card">
+        <div class="infra-header">
+          <span class="infra-type">${i.icon} ${i.type}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--muted);">${total} total</span>
+        </div>
+        <div class="infra-bar-wrap">
+          <div class="infra-bar">
+            <div class="infra-bar-fill destroyed" style="width:${destroyedPct}%"></div>
+          </div>
+          <div class="infra-bar">
+            <div class="infra-bar-fill damaged" style="width:${damagedPct}%"></div>
+          </div>
+        </div>
+        <div class="infra-legend">
+          <span><div class="dot-red"></div>${i.destroyed} destroyed</span>
+          <span><div class="dot-orange"></div>${i.damaged} damaged</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ─── ECONOMIC ────────────────────────────────────────────
+function buildEconomic(economic) {
+  const el = document.getElementById('econSummary');
+  if (el) el.textContent = economic.summary;
+
+  const grid = document.getElementById('econStats');
+  if (grid) {
+    grid.innerHTML = economic.stats.map((s, i) => {
+      const changeHtml = s.change ? `<span class="e-change ${s.direction === 'up' ? 'up' : 'down'}">${s.change}</span>` : '';
+      return `
+      <div class="econ-card ${s.color}" style="animation-delay:${i * 0.06}s">
+        <div class="e-header">
+          <span class="e-icon">${s.icon}</span>
+          <span class="e-label">${s.label}</span>
+        </div>
+        <div class="e-value">${s.value}${changeHtml}</div>
+        <div class="e-desc">${s.desc}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function initOilChart(economic) {
+  if (typeof Chart === 'undefined' || !economic.oilPriceHistory) return;
+  const ctx = document.getElementById('oilChart');
+  if (!ctx || ctx._chartDone) return;
+  ctx._chartDone = true;
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: economic.oilPriceHistory.map(p => p.date),
+      datasets: [{
+        label: 'Brent Crude ($/barrel)',
+        data: economic.oilPriceHistory.map(p => p.price),
+        borderColor: '#f4a261',
+        backgroundColor: 'rgba(244,162,97,0.12)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 5,
+        pointBackgroundColor: economic.oilPriceHistory.map(p => p.price > 100 ? '#e63946' : '#f4a261'),
+        pointBorderColor: economic.oilPriceHistory.map(p => p.price > 100 ? '#e63946' : '#f4a261'),
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { boxWidth: 12, padding: 16 } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `$${ctx.parsed.y}/barrel`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: false,
+          min: 60,
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { callback: v => '$' + v }
+        },
+        x: { grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+// ─── NEWS FEED ───────────────────────────────────────────
+function buildNewsFeed(news) {
+  const el = document.getElementById('newsFeed');
+  if (!el || !news) return;
+
+  el.innerHTML = news.map((n, i) => `
+    <div class="news-item" style="animation-delay:${i * 0.04}s">
+      ${i === 0 ? '<div class="news-pulse"></div>' : '<div style="width:8px;flex-shrink:0;"></div>'}
+      <div class="news-time">${n.time}</div>
+      <div class="news-content">
+        <div class="news-title">${n.title}</div>
+        <div>
+          <span class="news-source">${n.source}</span>
+          <span class="news-cat ${n.category}">${n.category}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ─── MAP (Enhanced) ──────────────────────────────────────
+let mapInstance = null;
+let mapMarkers = [];
+let mapCircles = [];
 function initMap(data) {
   if (typeof L === 'undefined' || mapInitialized) return;
   mapInitialized = true;
-  const map = L.map('conflictMap',{zoomControl:true,scrollWheelZoom:true}).setView([30,48],4);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-    attribution:'© CartoDB',maxZoom:18
-  }).addTo(map);
+
+  const map = L.map('conflictMap', { zoomControl: true, scrollWheelZoom: true }).setView([30, 48], 4);
+  mapInstance = map;
+
+  // Tile layers
+  const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© CartoDB', maxZoom: 18
+  });
+  const satTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '© Esri', maxZoom: 18
+  });
+  darkTiles.addTo(map);
+
+  // Layer control buttons
+  const mapSection = document.getElementById('mapSection');
+  if (mapSection) {
+    const controls = document.createElement('div');
+    controls.className = 'map-controls';
+    controls.innerHTML = `
+      <button class="map-layer-btn active" onclick="toggleMapLayer('all',this)">All</button>
+      <button class="map-layer-btn" onclick="toggleMapLayer('strikes',this)">⚔️ Strikes</button>
+      <button class="map-layer-btn" onclick="toggleMapLayer('bases',this)">🎯 Bases</button>
+      <button class="map-layer-btn" onclick="toggleMapLayer('humanitarian',this)">🏥 Humanitarian</button>
+      <button class="map-layer-btn" onclick="toggleMapTiles(this)">🛰️ Satellite</button>
+    `;
+    mapSection.after(controls);
+  }
 
   const markers = [
-    {lat:35.69,lng:51.39,title:'Tehran',desc:'Capital — Supreme Leader compound destroyed. IRIB HQ struck.',color:'#e63946',size:14},
-    {lat:32.65,lng:51.67,title:'Isfahan',desc:'Nuclear facility targeted by US bunker-busters.',color:'#e63946',size:12},
-    {lat:34.64,lng:50.88,title:'Qom',desc:'Religious center — military infrastructure struck.',color:'#e63946',size:10},
-    {lat:35.84,lng:50.94,title:'Karaj',desc:'Nuclear centrifuge production site targeted.',color:'#e63946',size:10},
-    {lat:34.31,lng:47.07,title:'Kermanshah',desc:'Western Iran — missile launches and counter-strikes.',color:'#f4a261',size:9},
-    {lat:32.65,lng:51.68,title:'Natanz',desc:'Primary uranium enrichment facility — destroyed by US.',color:'#e63946',size:12},
-    {lat:32.09,lng:34.78,title:'Tel Aviv',desc:'Israel — missile defense active. Iron Dome intercepts.',color:'#48cae4',size:12},
-    {lat:32.79,lng:34.99,title:'Haifa',desc:'Military base struck by Hezbollah rockets + drones.',color:'#f4a261',size:10},
-    {lat:31.75,lng:34.99,title:'Beit Shemesh',desc:'9 killed in single ballistic missile strike.',color:'#e63946',size:10},
-    {lat:25.12,lng:51.32,title:'Al Udeid, Qatar',desc:'US base hit by 2 ballistic missiles. 65+ intercepted.',color:'#e63946',size:11},
-    {lat:26.23,lng:50.59,title:'Manama, Bahrain',desc:'US 5th Fleet HQ struck multiple times.',color:'#e63946',size:10},
-    {lat:29.38,lng:47.98,title:'Kuwait City',desc:'US warplanes crashed. 3+ killed from shrapnel.',color:'#f4a261',size:9},
-    {lat:36.19,lng:44.01,title:'Erbil, Iraq',desc:'Airport area struck. Iranian proxy groups active.',color:'#f4a261',size:9},
-    {lat:33.89,lng:35.50,title:'Beirut, Lebanon',desc:'50+ killed, 335+ wounded from Israeli strikes.',color:'#e63946',size:10},
-    {lat:24.71,lng:46.68,title:'Riyadh, Saudi Arabia',desc:'Eastern Province oil infrastructure targeted.',color:'#f4a261',size:9},
-    {lat:31.95,lng:35.93,title:'Amman, Jordan',desc:'49 drones/missiles intercepted. No casualties.',color:'#48cae4',size:8},
+    {lat:35.69,lng:51.39,title:'Tehran',desc:'Capital — Supreme Leader compound destroyed. IRIB HQ struck.',color:'#e63946',size:14,cat:'strikes'},
+    {lat:32.65,lng:51.67,title:'Isfahan',desc:'Nuclear facility targeted by US bunker-busters.',color:'#e63946',size:12,cat:'strikes'},
+    {lat:34.64,lng:50.88,title:'Qom',desc:'Religious center — military infrastructure struck.',color:'#e63946',size:10,cat:'strikes'},
+    {lat:35.84,lng:50.94,title:'Karaj',desc:'Nuclear centrifuge production site targeted.',color:'#e63946',size:10,cat:'strikes'},
+    {lat:34.31,lng:47.07,title:'Kermanshah',desc:'Western Iran — missile launches and counter-strikes.',color:'#f4a261',size:9,cat:'strikes'},
+    {lat:32.65,lng:51.68,title:'Natanz',desc:'Primary uranium enrichment facility — destroyed by US.',color:'#e63946',size:12,cat:'strikes'},
+    {lat:32.09,lng:34.78,title:'Tel Aviv',desc:'Israel — missile defense active. Iron Dome intercepts.',color:'#48cae4',size:12,cat:'strikes'},
+    {lat:32.79,lng:34.99,title:'Haifa',desc:'Military base struck by Hezbollah rockets + drones.',color:'#f4a261',size:10,cat:'strikes'},
+    {lat:31.75,lng:34.99,title:'Beit Shemesh',desc:'9 killed in single ballistic missile strike.',color:'#e63946',size:10,cat:'strikes'},
+    {lat:25.12,lng:51.32,title:'Al Udeid, Qatar',desc:'US base hit by 2 ballistic missiles. 65+ intercepted.',color:'#e63946',size:11,cat:'bases'},
+    {lat:26.23,lng:50.59,title:'Manama, Bahrain',desc:'US 5th Fleet HQ struck multiple times.',color:'#e63946',size:10,cat:'bases'},
+    {lat:29.38,lng:47.98,title:'Kuwait City',desc:'US warplanes crashed. 3+ killed from shrapnel.',color:'#f4a261',size:9,cat:'bases'},
+    {lat:36.19,lng:44.01,title:'Erbil, Iraq',desc:'Airport area struck. Iranian proxy groups active.',color:'#f4a261',size:9,cat:'bases'},
+    {lat:33.89,lng:35.50,title:'Beirut, Lebanon',desc:'50+ killed, 335+ wounded from Israeli strikes.',color:'#e63946',size:10,cat:'strikes'},
+    {lat:24.71,lng:46.68,title:'Riyadh, Saudi Arabia',desc:'Eastern Province oil infrastructure targeted.',color:'#f4a261',size:9,cat:'bases'},
+    {lat:31.95,lng:35.93,title:'Amman, Jordan',desc:'49 drones/missiles intercepted. No casualties.',color:'#48cae4',size:8,cat:'bases'},
+    // Humanitarian markers
+    {lat:35.60,lng:51.50,title:'Tehran — Humanitarian Crisis',desc:'200K+ displaced. 15 hospitals damaged. Water supply intermittent.',color:'#2dc653',size:11,cat:'humanitarian'},
+    {lat:32.50,lng:51.70,title:'Isfahan — Aid Operations',desc:'MSF field hospital active. 80K+ displaced. Power grid destroyed.',color:'#2dc653',size:10,cat:'humanitarian'},
+    {lat:34.35,lng:47.10,title:'Kermanshah — Refugee Flow',desc:'50K+ fleeing toward Iraq border. UNHCR corridor established.',color:'#2dc653',size:9,cat:'humanitarian'},
   ];
+
+  // Heatmap-style circles for intensity
+  const heatZones = [
+    {lat:35.69,lng:51.39,radius:80000,color:'#e63946'},
+    {lat:32.65,lng:51.67,radius:50000,color:'#e63946'},
+    {lat:34.64,lng:50.88,radius:40000,color:'#e63946'},
+    {lat:33.89,lng:35.50,radius:35000,color:'#f4a261'},
+    {lat:25.12,lng:51.32,radius:30000,color:'#f4a261'},
+  ];
+
+  heatZones.forEach(h => {
+    const circle = L.circle([h.lat, h.lng], {
+      radius: h.radius, color: h.color, fillColor: h.color,
+      fillOpacity: 0.08, weight: 1, opacity: 0.2
+    }).addTo(map);
+    mapCircles.push(circle);
+  });
 
   markers.forEach(m => {
     const icon = L.divIcon({
-      className:'',
-      html:`<div style="width:${m.size}px;height:${m.size}px;background:${m.color};border-radius:50%;box-shadow:0 0 ${m.size}px ${m.color}80;animation:blink 2s infinite;"></div>`,
-      iconSize:[m.size,m.size],iconAnchor:[m.size/2,m.size/2]
+      className: '',
+      html: `<div style="width:${m.size}px;height:${m.size}px;background:${m.color};border-radius:50%;box-shadow:0 0 ${m.size}px ${m.color}80;animation:blink 2s infinite;"></div>`,
+      iconSize: [m.size, m.size], iconAnchor: [m.size / 2, m.size / 2]
     });
-    L.marker([m.lat,m.lng],{icon}).addTo(map).bindPopup(`<strong style="color:${m.color}">${m.title}</strong><br/>${m.desc}`);
+    const marker = L.marker([m.lat, m.lng], { icon }).addTo(map)
+      .bindPopup(`<strong style="color:${m.color}">${m.title}</strong><br/>${m.desc}`);
+    marker._category = m.cat;
+    mapMarkers.push(marker);
   });
+
+  // Store layers for toggling
+  window._mapDarkTiles = darkTiles;
+  window._mapSatTiles = satTiles;
+  window._mapSatActive = false;
+}
+
+function toggleMapLayer(cat, btn) {
+  if (!mapInstance) return;
+  // Update button styles
+  document.querySelectorAll('.map-layer-btn').forEach(b => {
+    if (b.textContent.includes('Satellite')) return;
+    b.classList.remove('active');
+  });
+  if (btn && !btn.textContent.includes('Satellite')) btn.classList.add('active');
+
+  mapMarkers.forEach(m => {
+    if (cat === 'all' || m._category === cat) {
+      if (!mapInstance.hasLayer(m)) mapInstance.addLayer(m);
+    } else {
+      if (mapInstance.hasLayer(m)) mapInstance.removeLayer(m);
+    }
+  });
+}
+
+function toggleMapTiles(btn) {
+  if (!mapInstance) return;
+  if (window._mapSatActive) {
+    mapInstance.removeLayer(window._mapSatTiles);
+    window._mapDarkTiles.addTo(mapInstance);
+    window._mapSatActive = false;
+    btn.classList.remove('active');
+  } else {
+    mapInstance.removeLayer(window._mapDarkTiles);
+    window._mapSatTiles.addTo(mapInstance);
+    window._mapSatActive = true;
+    btn.classList.add('active');
+  }
 }
 
 // ─── CHARTS ──────────────────────────────────────────────
@@ -288,6 +510,15 @@ function render(data) {
   document.getElementById('timeline').innerHTML = buildTimeline(data.timeline);
   document.getElementById('regionGrid').innerHTML = buildRegional(data.regional);
   document.getElementById('sources').innerHTML = '<strong>Sources:</strong> ' + data.sources.join(' · ');
+
+  // New sections
+  if (data.humanitarian) buildHumanitarian(data.humanitarian);
+  if (data.economic) {
+    buildEconomic(data.economic);
+    initOilChart(data.economic);
+  }
+  if (data.newsFeed) buildNewsFeed(data.newsFeed);
+
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('app').style.opacity = '1';
   initScrollAnimations();

@@ -188,6 +188,78 @@
     { "flag": "🇱🇧", "name": "Lebanon", "status": "struck", "badge": "hit", "desc": "50+ killed, 335+ wounded from Israeli air strikes. Hezbollah launched rocket+drone attack on Haifa military base in retaliation." },
     { "flag": "🌊", "name": "Red Sea / Suez", "status": "threatened", "badge": "partial", "desc": "Houthi threats resumed. Maersk rerouting vessels via Cape of Good Hope instead of Suez Canal due to risk." }
   ],
+  "humanitarian": {
+    "summary": "The humanitarian crisis is rapidly deteriorating across Iran and the wider region. Multiple cities remain without power or water after sustained aerial bombardment.",
+    "stats": [
+      { "id": "displaced", "icon": "🏚️", "label": "Displaced People", "value": "500,000+", "rawValue": 500000, "desc": "Fleeing targeted cities across 24 provinces", "color": "red", "source": "UNHCR estimate" },
+      { "id": "hospitals", "icon": "🏥", "label": "Hospitals Damaged/Destroyed", "value": "47", "rawValue": 47, "desc": "Including 12 completely destroyed", "color": "orange", "source": "WHO / Iranian Health Ministry" },
+      { "id": "schools", "icon": "🏫", "label": "Schools Destroyed", "value": "89", "rawValue": 89, "desc": "In targeted provinces — 340,000 students affected", "color": "orange", "source": "UNICEF" },
+      { "id": "no_water", "icon": "💧", "label": "Without Clean Water", "value": "3.5M", "rawValue": 3500000, "desc": "Water infrastructure destroyed in 8 provinces", "color": "cyan", "source": "UN OCHA" },
+      { "id": "no_power", "icon": "⚡", "label": "Without Electricity", "value": "2.1M", "rawValue": 2100000, "desc": "Power grid destroyed in Isfahan, Kermanshah, Qom", "color": "yellow", "source": "Iranian Power Ministry" },
+      { "id": "food_insecure", "icon": "🍞", "label": "Food Insecure", "value": "1.2M", "rawValue": 1200000, "desc": "Supply chains disrupted in conflict zones", "color": "orange", "source": "WFP" },
+      { "id": "refugees", "icon": "🚶", "label": "Cross-border Refugees", "value": "85,000+", "rawValue": 85000, "desc": "Fleeing to Turkey, Iraq, Pakistan, Afghanistan", "color": "red", "source": "UNHCR" },
+      { "id": "medical_need", "icon": "🚑", "label": "Need Emergency Medical Aid", "value": "180,000+", "rawValue": 180000, "desc": "Burns, blast injuries, crush syndrome", "color": "red", "source": "MSF / Iranian Red Crescent" }
+    ],
+    "infrastructure": [
+      { "type": "Power Plants", "destroyed": 14, "damaged": 31, "icon": "⚡" },
+      { "type": "Water Treatment", "destroyed": 8, "damaged": 19, "icon": "💧" },
+      { "type": "Bridges", "destroyed": 23, "damaged": 45, "icon": "🌉" },
+      { "type": "Communication Towers", "destroyed": 67, "damaged": 124, "icon": "📡" },
+      { "type": "Hospitals", "destroyed": 12, "damaged": 35, "icon": "🏥" },
+      { "type": "Schools", "destroyed": 89, "damaged": 156, "icon": "🏫" }
+    ]
+  },
+  "economic": {
+    "summary": "The conflict has sent shockwaves through global energy markets and trade routes, with oil prices spiking to levels not seen since the 2022 crisis.",
+    "stats": [
+      { "id": "oil_price", "icon": "🛢️", "label": "Brent Crude Oil", "value": "$127/barrel", "change": "+42%", "direction": "up", "desc": "Highest since 2022. Strait of Hormuz tensions driving supply fears.", "color": "red" },
+      { "id": "iran_gdp", "icon": "📉", "label": "Iran GDP Impact", "value": "-18%", "change": "-18%", "direction": "down", "desc": "Estimated economic contraction in 2026. Oil exports halted. Sanctions tightened.", "color": "red" },
+      { "id": "trade_disruption", "icon": "🚢", "label": "Strait of Hormuz", "value": "40% reduced", "change": "-40%", "direction": "down", "desc": "$1.4 trillion annual oil flow threatened. Insurance premiums 800% higher.", "color": "orange" },
+      { "id": "stock_impact", "icon": "💹", "label": "Global Markets", "value": "-6.2%", "change": "-6.2%", "direction": "down", "desc": "S&P 500 fell 4.1%, FTSE -5.8%, Nikkei -6.2% in first week of Phase 2.", "color": "orange" },
+      { "id": "damage_estimate", "icon": "💰", "label": "Estimated Damage", "value": "$280B+", "change": "", "direction": "none", "desc": "Infrastructure, military, and economic damage across all countries and regions.", "color": "yellow" },
+      { "id": "shipping_cost", "icon": "📦", "label": "Shipping Costs", "value": "+340%", "change": "+340%", "direction": "up", "desc": "Container shipping rates for Middle East routes surged. Suez traffic diverted.", "color": "orange" }
+    ],
+    "oilPriceHistory": [
+      { "date": "Jun 1", "price": 78 },
+      { "date": "Jun 13", "price": 95 },
+      { "date": "Jun 18", "price": 108 },
+      { "date": "Jun 22", "price": 118 },
+      { "date": "Jun 24", "price": 105 },
+      { "date": "Jul 2025", "price": 89 },
+      { "date": "Feb 27", "price": 91 },
+      { "date": "Feb 28", "price": 112 },
+      { "date": "Mar 1", "price": 119 },
+      { "date": "Mar 3", "price": 124 },
+      { "date": "Mar 5", "price": 127 }
+    ]
+  },
+  "newsFeed": [
+    { "time": "1h ago", "title": "IAEA: Iran's nuclear facilities 'beyond repair' after US bunker-buster strikes", "source": "Reuters", "url": "#", "category": "nuclear" },
+    { "time": "2h ago", "title": "Iran's internet restored briefly — citizens share footage of devastation in Isfahan", "source": "Iran International", "url": "#", "category": "humanitarian" },
+    { "time": "3h ago", "title": "Death toll in Iran surpasses 2,400 — Hengaw Organization report", "source": "Al Jazeera", "url": "#", "category": "casualties" },
+    { "time": "3h ago", "title": "Pentagon briefing: 'All major Iranian air defenses neutralized' — Phase 2 goals on track", "source": "CNN", "url": "#", "category": "military" },
+    { "time": "4h ago", "title": "Israel calls up additional 30,000 reservists amid Hezbollah rocket barrage on Haifa", "source": "Times of Israel", "url": "#", "category": "military" },
+    { "time": "5h ago", "title": "Trump: 'Conflict could last a month' — Regime change remains core objective", "source": "AP News", "url": "#", "category": "politics" },
+    { "time": "5h ago", "title": "EU foreign ministers call for immediate ceasefire — Borrell: 'Humanitarian catastrophe unfolding'", "source": "France24", "url": "#", "category": "diplomacy" },
+    { "time": "6h ago", "title": "China and Russia condemn 'illegal aggression' — threaten economic countermeasures", "source": "BBC", "url": "#", "category": "politics" },
+    { "time": "7h ago", "title": "CENTCOM confirms destruction of 17 Iranian naval vessels in Strait of Hormuz", "source": "CENTCOM", "url": "#", "category": "military" },
+    { "time": "8h ago", "title": "Iran's IRGC vows 'unprecedented retaliation' — threatens to close Strait of Hormuz entirely", "source": "The Guardian", "url": "#", "category": "military" },
+    { "time": "9h ago", "title": "UN Security Council emergency session — Russia and China veto ceasefire resolution", "source": "UN News", "url": "#", "category": "diplomacy" },
+    { "time": "10h ago", "title": "Global anti-war protests erupt — millions march in London, Berlin, Istanbul, Jakarta", "source": "DW News", "url": "#", "category": "politics" },
+    { "time": "11h ago", "title": "Oil surges past $127 as Strait of Hormuz traffic drops 40% — Goldman predicts $140", "source": "Bloomberg", "url": "#", "category": "economic" },
+    { "time": "12h ago", "title": "Indian nationals evacuated from Iran and Gulf states — Operation Kaveri II launched", "source": "NDTV", "url": "#", "category": "humanitarian" },
+    { "time": "13h ago", "title": "WHO warns of 'disease outbreak risk' in bombed Iranian cities — hospitals overwhelmed", "source": "WHO", "url": "#", "category": "humanitarian" },
+    { "time": "14h ago", "title": "500,000+ displaced in Iran — UNHCR opens emergency corridor via Turkey", "source": "UNHCR", "url": "#", "category": "humanitarian" },
+    { "time": "15h ago", "title": "Satellite imagery reveals near-total destruction of Natanz nuclear complex", "source": "BBC", "url": "#", "category": "nuclear" },
+    { "time": "16h ago", "title": "Hezbollah launches 200+ rockets at Haifa in retaliation for Israeli Lebanon strikes", "source": "Al Jazeera", "url": "#", "category": "military" },
+    { "time": "18h ago", "title": "Iran's IRIB state broadcaster headquarters destroyed — communications blackout spreads", "source": "The New York Times", "url": "#", "category": "military" },
+    { "time": "20h ago", "title": "UN Human Rights Council condemns 'disproportionate use of force' against civilians", "source": "UN News", "url": "#", "category": "diplomacy" },
+    { "time": "22h ago", "title": "Maersk suspends all Red Sea shipping — Houthis threaten attacks on US-allied vessels", "source": "Financial Times", "url": "#", "category": "economic" },
+    { "time": "1d ago", "title": "MSF deploys emergency surgical teams to Isfahan and Kermanshah — 'Carnage beyond belief'", "source": "MSF", "url": "#", "category": "humanitarian" },
+    { "time": "1d ago", "title": "Pakistan closes border with Iran citing 'security concerns' — 15,000 refugees stranded", "source": "Dawn", "url": "#", "category": "humanitarian" },
+    { "time": "1d ago", "title": "US Defense Secretary: 'Iran's IRGC command structure effectively decimated'", "source": "Washington Post", "url": "#", "category": "military" },
+    { "time": "1d ago", "title": "Global food prices surge 8% amid shipping disruptions and oil shock", "source": "The Economist", "url": "#", "category": "economic" }
+  ],
   "sources": [
     "Al Jazeera",
     "Wikipedia — 2026 Iran Conflict",
@@ -195,6 +267,25 @@
     "CENTCOM",
     "Israeli Ministry of Health",
     "Iranian Red Crescent Society",
-    "Lebanese Health Ministry"
+    "Lebanese Health Ministry",
+    "UN OCHA",
+    "UNHCR",
+    "Reuters / AP / AFP",
+    "Bloomberg",
+    "MSF",
+    "UNICEF",
+    "WFP",
+    "BBC",
+    "CNN",
+    "The Guardian",
+    "The New York Times",
+    "Washington Post",
+    "Times of Israel",
+    "Iran International",
+    "France24",
+    "DW News",
+    "Financial Times",
+    "The Economist",
+    "WHO"
   ]
 }

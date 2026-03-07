@@ -82,6 +82,8 @@
       <div class="header-controls">
         <div class="live-badge">Live Data</div>
         <div class="viewers-badge">👁 <span id="viewerCount">1,024</span> viewing</div>
+        <a href="about.html" class="icon-btn" title="About" style="text-decoration:none;">ℹ️</a>
+        <a href="donate.html" class="icon-btn" title="Donate for Relief" style="text-decoration:none;background:rgba(45,198,83,0.12);border-color:rgba(45,198,83,0.3);color:#2dc653;">❤️</a>
         <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">☀️</button>
         <button class="icon-btn" onclick="openSearch()" title="Search (Ctrl+K)">🔍</button>
         <button class="icon-btn notify-btn" id="notifyBtn" onclick="toggleNotifications()" title="Notifications">🔔</button>
@@ -130,6 +132,44 @@
           <canvas id="militaryChart"></canvas>
         </div>
       </div>
+    </div>
+
+    <!-- Humanitarian Impact -->
+    <div>
+      <div class="section-label">Humanitarian Impact</div>
+      <div class="humanitarian-summary" id="humanSummary"></div>
+      <div class="human-stats-grid" id="humanStats"></div>
+      <div class="section-sublabel">Infrastructure Damage</div>
+      <div class="infra-grid" id="infraGrid"></div>
+    </div>
+
+    <!-- Economic Impact -->
+    <div>
+      <div class="section-label">Economic Impact</div>
+      <div class="economic-summary" id="econSummary"></div>
+      <div class="econ-stats-grid" id="econStats"></div>
+      <div class="chart-panel" style="margin-top:16px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">Brent Crude Oil Price — Conflict Impact</div>
+        <canvas id="oilChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Live News Feed -->
+    <div>
+      <div class="section-label">Live News Feed</div>
+      <div class="news-feed" id="newsFeed"></div>
+    </div>
+
+    <!-- Donate CTA Banner -->
+    <div class="donate-cta-banner">
+      <div class="donate-cta-left">
+        <div class="donate-cta-icon">❤️</div>
+        <div>
+          <div class="donate-cta-title">Help Civilians Affected by This Conflict</div>
+          <div class="donate-cta-desc">500,000+ displaced · 3.5M without water · 47 hospitals damaged. Every contribution saves lives.</div>
+        </div>
+      </div>
+      <a href="donate.html" class="donate-cta-btn">Donate to Relief →</a>
     </div>
 
     <!-- Countries -->
