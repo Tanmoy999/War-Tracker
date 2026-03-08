@@ -136,22 +136,22 @@ async function getACLEDToken() {
     // Cache for 50 minutes (tokens typically last 1 hour)
     _acledTokenExpiry = Date.now() + 50 * 60 * 1000;
     console.log('ACLED: OAuth token obtained');
-    return _acledToken;
+    return { token: _acledToken, error: null };
   } catch (err) {
     console.error('ACLED OAuth Error:', err.message);
-    return null;
+    return { token: null, error: 'OAuth Error: ' + err.message };
   }
 }
 
 async function fetchACLED() {
   if (!ACLED_USERNAME || !ACLED_PASSWORD) {
-    console.log('ACLED: No credentials — set ACLED_USERNAME and ACLED_PASSWORD (your myACLED login)');
-    return null;
+    return { data: null, error: 'No credentials — set ACLED_USERNAME and ACLED_PASSWORD' };
   }
 
   // Step 1: Get OAuth token
-  const token = await getACLEDToken();
-  if (!token) return null;
+  const auth = await getACLEDToken();
+  if (!auth.token) return { data: null, error: auth.error };
+  const token = auth.token;
 
   // Step 2: Fetch conflict data
   const countryNames = Object.values(config.countries).map(c => c.name);
@@ -171,14 +171,16 @@ async function fetchACLED() {
     const data = await res.json();
 
     const events = data.data || (Array.isArray(data) ? data : null);
+    if (!events && data.error) throw new Error('ACLED returned error: ' + JSON.stringify(data));
+    
     if (events) {
       console.log(`ACLED: ${events.length} events fetched`);
-      return events;
+      return { data: events, error: null };
     }
-    return null;
+    return { data: null, error: 'ACLED returned empty or malformed data' };
   } catch (err) {
     console.error('ACLED Data Error:', err.message);
-    return null;
+    return { data: null, error: 'Data Fetch Error: ' + err.message };
   }
 }
 
@@ -840,7 +842,7 @@ async function getStatsData() {
   console.log('Fetching fresh data from all APIs...');
 
   // Fetch all APIs in parallel
-  const [acledEvents, newsArticles, guardianArticles, gdeltArticles, reliefWebReports, alphaData, wikiSummary] =
+  const [acledResponse, newsArticles, guardianArticles, gdeltArticles, reliefWebReports, alphaData, wikiSummary] =
     await Promise.all([
       fetchACLED(),
       fetchNewsAPI(),
@@ -850,6 +852,9 @@ async function getStatsData() {
       fetchAlphaVantage(),
       fetchWikipedia()
     ]);
+
+  const acledEvents = acledResponse?.data || null;
+  const acledErrorStr = acledResponse?.error || null;
 
   // Log what we got
   console.log(`Data received — ACLED: ${acledEvents?.length || 0}, News: ${newsArticles?.length || 0}, Guardian: ${guardianArticles?.length || 0}, GDELT: ${gdeltArticles?.length || 0}, ReliefWeb: ${reliefWebReports?.length || 0}, Oil: ${alphaData?.oil ? 'yes' : 'no'}, Wiki: ${wikiSummary ? 'yes' : 'no'}`);
@@ -871,6 +876,7 @@ async function getStatsData() {
     meta: {
       lastUpdated: new Date().toISOString(),
       dataSource: activeSources.join(' + ') || 'No APIs configured',
+      acledError: acledErrorStr, // Detailed debug info
       conflictStart: config.config.conflictStart,
       phase2Start: config.config.phase2Start,
       currentDay: conflictDay(),
