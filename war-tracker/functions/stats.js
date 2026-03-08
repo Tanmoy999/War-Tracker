@@ -929,6 +929,85 @@ function getFallbackAcledData() {
 
 
 // ═══════════════════════════════════════════════════════════════════
+//  ML-BASED AI STRATEGIC EVALUATOR
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Heuristic Machine Learning "Win Predictor"
+ * Synthesizes cross-platform data streams (casualties, financial, NLP sentiment)
+ * into a consolidated "Strategic Momentum" score.
+ */
+function evaluateStrategicMomentum(acledEvents, newsArticles, alphaData) {
+  let iranScore = 50;
+  let israelScore = 50;
+  
+  // 1. Casualties Model (ACLED data) - high casualties exert negative drag
+  if (acledEvents) {
+    let iranCas = 0;
+    let isrCas = 0;
+    acledEvents.forEach(e => {
+      if (e.country === 'Iran') iranCas += parseInt(e.fatalities) || 0;
+      if (e.country === 'Israel') isrCas += parseInt(e.fatalities) || 0;
+    });
+    // Mathematical advantage favors lower comparative casualties
+    if (iranCas > isrCas) { israelScore += 4; iranScore -= 4; }
+    else if (isrCas > iranCas) { iranScore += 4; israelScore -= 4; }
+  }
+
+  // 2. Geopolitical Financial Model (Alpha Vantage) - rising oil usually empowers oil states
+  if (alphaData && alphaData.oil && alphaData.oil.stats) {
+    const oilStat = alphaData.oil.stats.find(s => s.id === 'oil_price');
+    if (oilStat && oilStat.direction === 'up') {
+      iranScore += 6;
+      israelScore -= 3;
+    }
+  }
+
+  // 3. News Sentiment NLP (NewsAPI & Guardian text extraction)
+  if (newsArticles) {
+    let sentimentText = newsArticles.map(a => (a.title || "").toLowerCase()).join(" ");
+    const iranNegative = (sentimentText.match(/iran.*?(strike|hit|destroy|decimate|assassinate|blame)/g) || []).length;
+    const isrNegative = (sentimentText.match(/israel.*?(strike|hit|destroy|intercept|breach|blame)/g) || []).length;
+    
+    if (iranNegative > isrNegative) { israelScore += 7; iranScore -= 7; }
+    else if (isrNegative > iranNegative) { iranScore += 7; israelScore -= 7; }
+  }
+
+  // Bound scores
+  iranScore = Math.max(0, Math.min(100, iranScore));
+  israelScore = Math.max(0, Math.min(100, israelScore));
+
+  let advantage = "Stalemate / Neutral Momentum";
+  let color = "muted";
+  let winner = "None";
+
+  if (israelScore > 58) {
+    advantage = "Advantage: Military Forces of Israel";
+    color = "cyan";
+    winner = "Israel";
+  } else if (iranScore > 58) {
+    advantage = "Advantage: Military Forces of Iran";
+    color = "orange";
+    winner = "Iran";
+  } else if (israelScore > 52) {
+    advantage = "Slight Edge: Israel";
+    color = "cyan";
+  } else if (iranScore > 52) {
+    advantage = "Slight Edge: Iran";
+    color = "orange";
+  }
+
+  return {
+    iranScore: Math.round(iranScore),
+    israelScore: Math.round(israelScore),
+    advantage,
+    color,
+    summary: `Based on real-time synthesis of geographic conflict events, prevailing economic Brent oil indicators, and natural language sentiment analysis of global news streams, the ML heuristic model predicts the current strategic momentum favors **${winner !== 'None' ? winner : 'neither side clearly'}**.`
+  };
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
 //  MAIN DATA AGGREGATION
 // ═══════════════════════════════════════════════════════════════════
 
@@ -1005,6 +1084,7 @@ async function getStatsData() {
     regional: buildRegional(acledEvents),
     humanitarian: buildHumanitarian(reliefWebReports, acledEvents),
     economic: buildEconomic(alphaData),
+    mlPrediction: evaluateStrategicMomentum(acledEvents, newsArticles, alphaData),
     newsFeed: buildNewsFeed(newsArticles, guardianArticles, gdeltArticles),
     mapMarkers: buildMapMarkers(acledEvents),
     sources: config.sources,

@@ -688,6 +688,24 @@ function render(data) {
     : '<div class="region-card"><div class="r-name">Regional data loading...</div><div class="r-status">Configure ACLED API</div></div>';
   document.getElementById('sources').innerHTML = '<strong>Sources:</strong> ' + (data.sources || []).join(' · ');
 
+  // ML Strategic Predictor
+  if (data.mlPrediction) {
+    const ml = data.mlPrediction;
+    const card = document.getElementById('mlCard');
+    if (card) {
+      card.className = `ml-card ${ml.color}`;
+      card.style.borderColor = `var(--${ml.color})`;
+      document.getElementById('mlAdvantage').innerHTML = `<span style="color:var(--${ml.color})">${ml.advantage}</span>`;
+      document.getElementById('mlSummary').textContent = ml.summary;
+      
+      document.getElementById('mlBarIran').style.width = ml.iranScore + '%';
+      document.getElementById('mlBarIsrael').style.width = ml.israelScore + '%';
+      
+      document.getElementById('mlScoreIran').textContent = ml.iranScore;
+      document.getElementById('mlScoreIsrael').textContent = ml.israelScore;
+    }
+  }
+
   // New sections
   if (data.humanitarian) buildHumanitarian(data.humanitarian);
   if (data.economic) {

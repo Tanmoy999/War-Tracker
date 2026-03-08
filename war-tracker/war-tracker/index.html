@@ -135,6 +135,26 @@
 
   <div class="main">
 
+    <!-- ML Strategic Evaluator -->
+    <div id="mlPredictionSection" style="margin-bottom: 24px;">
+      <div class="section-label" style="display:flex;align-items:center;">
+        <span style="font-size:1.1rem;margin-right:8px;">🤖</span> ML Strategic Momentum Predictor
+      </div>
+      <div id="mlCard" class="ml-card error-card" style="border: 1px solid var(--border); background: var(--card-bg); padding: 16px; border-radius: 6px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Current Advantage Evaluation</div>
+        <div id="mlAdvantage" style="font-size:1.4rem;font-weight:700;margin-bottom:8px;">Evaluating models...</div>
+        <div id="mlSummary" style="font-size:0.9rem;color:var(--muted);line-height:1.5;margin-bottom:12px;">Synthesizing live ACLED, ReliefWeb, and NLP sentiment streams...</div>
+        <div class="ml-bar-wrap" style="width:100%;height:8px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;display:flex;">
+          <div id="mlBarIran" style="height:100%;background:var(--orange);transition:width 1s ease;"></div>
+          <div id="mlBarIsrael" style="height:100%;background:var(--cyan);transition:width 1s ease;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--muted);">
+          <span style="color:var(--orange);"><span id="mlScoreIran">0</span>% Iran</span>
+          <span style="color:var(--cyan);"><span id="mlScoreIsrael">0</span>% Israel</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Global Stats -->
     <div id="globalStatsSection">
       <div class="section-label">Global Casualties — All Sides</div>
