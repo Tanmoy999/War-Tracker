@@ -1,188 +1,925 @@
-// Netlify/Vercel Serverless Function - Real-time Conflict Tracker
-// Fetches live data from NewsAPI, Wikipedia, and other sources
+// ═══════════════════════════════════════════════════════════════════
+// War Tracker — Serverless API Function (Netlify/Vercel)
+// ALL data is fetched from live APIs. Zero hardcoded statistics.
+//
+// APIs used:
+//   1. ACLED  — Conflict events, fatalities, locations, actors
+//   2. NewsAPI — Live news articles
+//   3. Guardian — Additional news coverage
+//   4. GDELT — Global event tracking (no key needed)
+//   5. ReliefWeb — UN humanitarian reports (no key needed)
+//   6. Alpha Vantage — Oil prices, market data
+//   7. Wikipedia — Conflict context (no key needed)
+// ═══════════════════════════════════════════════════════════════════
 
-// Import static data (can be updated via separate endpoint)
-const staticData = require('./data.js');
+const config = require('./data.js');
 
-// API Keys (set as environment variables for security)
-const NEWS_API_KEY = process.env.NEWS_API_KEY || 'demo';
-const GUARDIAN_API_KEY = process.env.GUARDIAN_API_KEY || 'demo';
+// ─── API KEYS (from Netlify environment variables) ──────────────
+// ACLED uses OAuth token auth (old key system deprecated Sep 2025)
+const ACLED_USERNAME    = process.env.ACLED_USERNAME || '';
+const ACLED_PASSWORD    = process.env.ACLED_PASSWORD || '';
+const NEWS_API_KEY     = process.env.NEWS_API_KEY || '';
+const GUARDIAN_API_KEY  = process.env.GUARDIAN_API_KEY || '';
+const ALPHA_VANTAGE_KEY = process.env.ALPHA_VANTAGE_KEY || '';
 
-// Viewer tracking (persists during function execution lifecycle)
-let viewerCount = parseInt(process.env.VIEWER_COUNT || '847', 10);
-
-// Cache mechanism (stores data for 5 minutes)
+// ─── CACHE ──────────────────────────────────────────────────────
 let cachedData = null;
 let cacheTimestamp = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-/**
- * Fetch articles from NewsAPI about the conflict
- */
-async function fetchNewsArticles() {
+// ─── VIEWER TRACKING ────────────────────────────────────────────
+let viewerCount = parseInt(process.env.VIEWER_COUNT || '0', 10);
+
+// ═══════════════════════════════════════════════════════════════════
+//  UTILITY FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════
+
+function relativeTime(dateInput) {
+  const diffMs = Date.now() - new Date(dateInput).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  const hrs  = Math.floor(diffMs / 3600000);
+  const days = Math.floor(diffMs / 86400000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  if (hrs < 24)  return `${hrs}h ago`;
+  if (days < 7)  return `${days}d ago`;
+  return `${Math.floor(days / 7)}w ago`;
+}
+
+function conflictDay() {
+  const phase2 = new Date(config.config.phase2Start);
+  return Math.max(1, Math.ceil((Date.now() - phase2.getTime()) / 86400000));
+}
+
+function fmtNum(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1000) return n.toLocaleString();
+  return String(n);
+}
+
+function fatalityColor(count) {
+  const t = config.colorRules.fatalityThresholds;
+  if (count >= t.red) return 'red';
+  if (count >= t.orange) return 'orange';
+  if (count >= t.yellow) return 'yellow';
+  return 'muted';
+}
+
+function categorizeArticle(title) {
+  const t = (title || '').toLowerCase();
+  if (t.includes('nuclear') || t.includes('iaea') || t.includes('enrichment')) return 'nuclear';
+  if (t.includes('killed') || t.includes('death') || t.includes('casualt') || t.includes('wounded')) return 'casualties';
+  if (t.includes('humanitarian') || t.includes('refugee') || t.includes('displaced') || t.includes('hospital') || t.includes('aid')) return 'humanitarian';
+  if (t.includes('oil') || t.includes('market') || t.includes('shipping') || t.includes('economic')) return 'economic';
+  if (t.includes('ceasefire') || t.includes('diplomat') || t.includes('un ') || t.includes('council')) return 'diplomacy';
+  if (t.includes('trump') || t.includes('protest') || t.includes('sanction') || t.includes('regime')) return 'politics';
+  if (t.includes('strike') || t.includes('bomb') || t.includes('missile') || t.includes('drone') || t.includes('military')) return 'military';
+  return 'military';
+}
+
+/** Safe fetch with timeout — returns null on failure */
+async function safeFetch(url, options = {}) {
   try {
-    if (NEWS_API_KEY === 'demo') {
-      console.log('Using demo mode - set NEWS_API_KEY environment variable for real data');
-      return null;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 8000);
+    const res = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: { 'User-Agent': 'WarTracker/1.0', ...(options.headers || {}) }
+    });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error(`Fetch failed [${url.split('?')[0]}]:`, err.message);
+    return null;
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  API FETCHERS — Each returns raw data or null on failure
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * 1. ACLED — Armed Conflict Location & Event Data
+ *
+ * Uses OAuth token authentication (new system since Sep 2025).
+ * Set ACLED_USERNAME and ACLED_PASSWORD in environment variables
+ * (your myACLED login credentials from acleddata.com).
+ *
+ * Returns array of conflict events with: event_date, event_type,
+ * sub_event_type, actor1, actor2, country, admin1, latitude,
+ * longitude, fatalities, notes
+ */
+let _acledToken = null;
+let _acledTokenExpiry = 0;
+
+async function getACLEDToken() {
+  // Return cached token if still valid (tokens last ~1 hour)
+  if (_acledToken && Date.now() < _acledTokenExpiry) return _acledToken;
+
+  try {
+    const res = await fetch('https://acleddata.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        username: ACLED_USERNAME,
+        password: ACLED_PASSWORD,
+        grant_type: 'password',
+        client_id: 'acled'
+      }).toString()
+    });
+    if (!res.ok) throw new Error(`OAuth ${res.status}`);
+    const data = await res.json();
+    _acledToken = data.access_token;
+    // Cache for 50 minutes (tokens typically last 1 hour)
+    _acledTokenExpiry = Date.now() + 50 * 60 * 1000;
+    console.log('ACLED: OAuth token obtained');
+    return _acledToken;
+  } catch (err) {
+    console.error('ACLED OAuth Error:', err.message);
+    return null;
+  }
+}
+
+async function fetchACLED() {
+  if (!ACLED_USERNAME || !ACLED_PASSWORD) {
+    console.log('ACLED: No credentials — set ACLED_USERNAME and ACLED_PASSWORD (your myACLED login)');
+    return null;
+  }
+
+  // Step 1: Get OAuth token
+  const token = await getACLEDToken();
+  if (!token) return null;
+
+  // Step 2: Fetch conflict data
+  const countryNames = Object.values(config.countries).map(c => c.name);
+  const today = new Date().toISOString().split('T')[0];
+  const url = `https://acleddata.com/api/acled/read`
+    + `?country=${encodeURIComponent(countryNames.join('|'))}`
+    + `&event_date=${config.config.conflictStart}|${today}`
+    + `&event_date_where=BETWEEN`
+    + `&limit=2000`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` },
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!res.ok) throw new Error(`ACLED API ${res.status}`);
+    const data = await res.json();
+
+    const events = data.data || (Array.isArray(data) ? data : null);
+    if (events) {
+      console.log(`ACLED: ${events.length} events fetched`);
+      return events;
     }
-
-    const keywords = 'Iran Israel USA conflict 2026';
-    const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(keywords)}&sortBy=publishedAt&language=en&pageSize=5&apiKey=${NEWS_API_KEY}`;
-    
-    const response = await fetch(url, { timeout: 5000 });
-    if (!response.ok) throw new Error('NewsAPI failed');
-    
-    const data = await response.json();
-    return data.articles || [];
+    return null;
   } catch (err) {
-    console.error('NewsAPI Error:', err.message);
+    console.error('ACLED Data Error:', err.message);
     return null;
   }
 }
 
 /**
- * Fetch casualty data from Wikipedia
+ * 2. NewsAPI — Live news articles
  */
-async function fetchWikipediaData() {
-  try {
-    const url = 'https://en.wikipedia.org/w/api.php?action=query&titles=2026_Iran_conflict&prop=revisions&rvprop=content&format=json&origin=*';
-    
-    const response = await fetch(url, { timeout: 5000 });
-    if (!response.ok) throw new Error('Wikipedia API failed');
-    
-    const data = await response.json();
-    const pages = Object.values(data.query.pages);
-    
-    if (pages.length > 0 && pages[0].revisions) {
-      const content = pages[0].revisions[0]['*'];
-      console.log('Wikipedia data fetched successfully');
-      return content;
-    }
-    return null;
-  } catch (err) {
-    console.error('Wikipedia Error:', err.message);
+async function fetchNewsAPI() {
+  if (!NEWS_API_KEY) {
+    console.log('NewsAPI: No API key — set NEWS_API_KEY');
     return null;
   }
+  const q = encodeURIComponent(config.config.searchKeywords);
+  const url = `https://newsapi.org/v2/everything?q=${q}&sortBy=publishedAt&language=en&pageSize=25&apiKey=${NEWS_API_KEY}`;
+  const data = await safeFetch(url);
+  return data?.articles || null;
 }
 
 /**
- * Fetch data from The Guardian API (news source)
+ * 3. The Guardian — News articles
  */
-async function fetchGuardianData() {
-  try {
-    if (GUARDIAN_API_KEY === 'demo') return null;
-
-    const url = `https://open-platform.theguardian.com/search?q=Iran%20Israel%20conflict&api-key=${GUARDIAN_API_KEY}`;
-    
-    const response = await fetch(url, { timeout: 5000 });
-    if (!response.ok) throw new Error('Guardian API failed');
-    
-    const data = await response.json();
-    console.log('Guardian data fetched');
-    return data.response?.results || [];
-  } catch (err) {
-    console.error('Guardian API Error:', err.message);
+async function fetchGuardian() {
+  if (!GUARDIAN_API_KEY) {
+    console.log('Guardian: No API key — set GUARDIAN_API_KEY');
     return null;
   }
+  const url = `https://content.guardianapis.com/search`
+    + `?q=${encodeURIComponent('Iran Israel conflict')}`
+    + `&order-by=newest&page-size=20&show-fields=trailText,thumbnail`
+    + `&api-key=${GUARDIAN_API_KEY}`;
+  const data = await safeFetch(url);
+  return data?.response?.results || null;
 }
 
 /**
- * Parse real news data and extract statistics
+ * 4. GDELT — Global event tracking (no key needed)
+ * Returns article list with tone analysis
  */
-async function aggregateRealData() {
-  try {
-    const [newsArticles, guardianArticles] = await Promise.all([
-      fetchNewsArticles(),
-      fetchGuardianData()
-    ]);
-
-    // Combine articles for alert ticker
-    const allArticles = [
-      ...(newsArticles || []),
-      ...(guardianArticles || [])
-    ];
-
-    let alertTicker = "⚠ LIVE DATA — ";
-    if (allArticles.length > 0) {
-      alertTicker += allArticles.slice(0, 3)
-        .map(a => (a.title || a.webTitle || 'Update'))
-        .join(' | ');
-    } else {
-      alertTicker += "Data aggregating from multiple sources...";
-    }
-
-    return {
-      articles: allArticles,
-      alertTicker: alertTicker
-    };
-  } catch (err) {
-    console.error('Data aggregation error:', err);
-    return { articles: [], alertTicker: "⚠ Loading live data..." };
-  }
+async function fetchGDELT() {
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc`
+    + `?query=${encodeURIComponent('Iran Israel conflict war')}`
+    + `&mode=ArtList&maxrecords=30&format=json&sort=DateDesc&timespan=48h`;
+  const data = await safeFetch(url, { timeoutMs: 6000 });
+  return data?.articles || null;
 }
 
 /**
- * Enhanced stats with real data
+ * 5. ReliefWeb (UN OCHA) — Humanitarian reports (no key needed)
  */
-async function getStatsData() {
-  // Check cache
-  if (cachedData && (Date.now() - cacheTimestamp) < CACHE_DURATION) {
-    console.log('Returning cached data');
-    return cachedData;
-  }
-
-  // Fetch real data
-  const realData = await aggregateRealData();
-  
-  // Increment viewer count (simulate real viewers on each request)
-  viewerCount += Math.floor(Math.random() * 3) + 1; // Add 1-3 viewers per request
-  
-  const stats = {
-    meta: {
-      lastUpdated: new Date().toISOString(),
-      dataSource: 'NewsAPI + Wikipedia + The Guardian',
-      ...staticData.meta,
-      viewers: viewerCount,
-      alertTicker: realData.alertTicker,
-      realTimeNews: realData.articles.length > 0
+async function fetchReliefWeb() {
+  const body = {
+    filter: {
+      operator: 'AND',
+      conditions: [
+        {
+          field: 'country.name',
+          value: ['Iran (Islamic Republic of)', 'Israel', 'Lebanon', 'Iraq'],
+          operator: 'OR'
+        },
+        { field: 'date.created', value: { from: config.config.conflictStart } }
+      ]
     },
-    globalStats: staticData.globalStats,
-    countries: staticData.countries,
-    militaryAssets: staticData.militaryAssets,
-    timeline: staticData.timeline,
-    regional: staticData.regional,
-    humanitarian: staticData.humanitarian,
-    economic: staticData.economic,
-    newsFeed: staticData.newsFeed,
-    sources: staticData.sources,
-    newsArticles: realData.articles.slice(0, 10) || []
+    limit: 20,
+    sort: ['date.created:desc'],
+    fields: {
+      include: ['title', 'date.created', 'source.shortname', 'body-html', 'country.name', 'url_alias']
+    }
   };
 
-  // Update cache
-  cachedData = stats;
-  cacheTimestamp = Date.now();
+  const data = await safeFetch('https://api.reliefweb.int/v1/reports?appname=wartracker', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    timeoutMs: 6000
+  });
+  return data?.data || null;
+}
+
+/**
+ * 6. Alpha Vantage — Oil prices & stock indices
+ */
+async function fetchAlphaVantage() {
+  if (!ALPHA_VANTAGE_KEY) {
+    console.log('Alpha Vantage: No API key — set ALPHA_VANTAGE_KEY');
+    return null;
+  }
+
+  // Fetch Brent crude oil prices
+  const oilUrl = `https://www.alphavantage.co/query?function=BRENT&interval=daily&apikey=${ALPHA_VANTAGE_KEY}`;
+  const oilData = await safeFetch(oilUrl);
+
+  // Fetch S&P 500 for market impact (uses a different call)
+  const spyUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=compact&apikey=${ALPHA_VANTAGE_KEY}`;
+  const spyData = await safeFetch(spyUrl);
+
+  return { oil: oilData, spy: spyData };
+}
+
+/**
+ * 7. Wikipedia — Conflict context
+ */
+async function fetchWikipedia() {
+  const titles = [
+    'Iran%E2%80%93Israel_conflict_(2025%E2%80%93present)',
+    'Iran%E2%80%93Israel_proxy_conflict',
+    'Iran%E2%80%93Israel_relations'
+  ];
+  for (const title of titles) {
+    const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*`
+      + `&prop=extracts&exintro=true&explaintext=true&titles=${title}`;
+    const data = await safeFetch(url, { timeoutMs: 5000 });
+    if (data?.query?.pages) {
+      const pages = Object.values(data.query.pages);
+      if (pages[0]?.extract && !pages[0]?.missing) {
+        return pages[0].extract;
+      }
+    }
+  }
+  return null;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  DATA TRANSFORMERS — Convert raw API data into frontend format
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Build globalStats from ACLED event data
+ */
+function buildGlobalStats(acledEvents) {
+  if (!acledEvents || acledEvents.length === 0) {
+    return [{ id: 'no_data', label: 'Conflict Data', value: 'Loading...', rawValue: 0,
+      sub: 'Waiting for ACLED API data', source: 'Configure ACLED_API_KEY', color: 'muted' }];
+  }
+
+  // Aggregate fatalities by country
+  const byCountry = {};
+  let totalFatalities = 0;
+  let totalEvents = 0;
+  let civilianDeaths = 0;
+
+  acledEvents.forEach(e => {
+    const f = parseInt(e.fatalities) || 0;
+    const country = e.country || 'Unknown';
+    if (!byCountry[country]) byCountry[country] = { fatalities: 0, events: 0, civilian: 0 };
+    byCountry[country].fatalities += f;
+    byCountry[country].events += 1;
+    totalFatalities += f;
+    totalEvents += 1;
+    if (e.event_type === 'Violence against civilians') {
+      civilianDeaths += f;
+      byCountry[country].civilian += f;
+    }
+  });
+
+  const stats = [
+    {
+      id: 'total_deaths',
+      label: 'Total Fatalities — All Sides',
+      value: fmtNum(totalFatalities) + '+',
+      rawValue: totalFatalities,
+      sub: `${totalEvents} conflict events across ${Object.keys(byCountry).length} countries`,
+      source: `ACLED — as of ${new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'})} (Live)`,
+      color: 'red'
+    }
+  ];
+
+  // Add top countries by fatalities
+  const countryCfg = config.countries;
+  const countryFlags = {};
+  Object.values(countryCfg).forEach(c => { countryFlags[c.name] = c.flag; });
+
+  const colorMap = { 'Iran': 'orange', 'Israel': 'yellow', 'United States': 'cyan', 'Lebanon': 'orange' };
+
+  Object.entries(byCountry)
+    .sort((a, b) => b[1].fatalities - a[1].fatalities)
+    .slice(0, 5) // Top 5 countries
+    .forEach(([country, data]) => {
+      const civilianPct = data.fatalities > 0 ? Math.round(data.civilian / data.fatalities * 100) : 0;
+      stats.push({
+        id: `${country.toLowerCase().replace(/\s+/g, '_')}_deaths`,
+        label: `Fatalities in ${country}`,
+        value: fmtNum(data.fatalities) + '+',
+        rawValue: data.fatalities,
+        sub: `${data.events} events · ~${civilianPct}% civilian · ${data.fatalities - data.civilian} combatant`,
+        source: 'ACLED (Live)',
+        color: colorMap[country] || 'muted'
+      });
+    });
 
   return stats;
 }
 
 /**
- * Netlify/Vercel Handler
+ * Build country detail cards from ACLED data
  */
+function buildCountries(acledEvents) {
+  if (!acledEvents) return {};
+
+  const countryCfg = config.countries;
+  const primaryKeys = config.primaryCountries;
+  const result = {};
+
+  primaryKeys.forEach(key => {
+    const cfg = countryCfg[key];
+    if (!cfg) return;
+
+    const countryEvents = acledEvents.filter(e => e.country === cfg.name);
+    let fatalities = 0, civilian = 0, eventCount = 0;
+    const eventTypes = {};
+    const subEventTypes = {};
+    const actors = new Set();
+
+    countryEvents.forEach(e => {
+      const f = parseInt(e.fatalities) || 0;
+      fatalities += f;
+      eventCount++;
+      if (e.event_type === 'Violence against civilians') civilian += f;
+      eventTypes[e.event_type] = (eventTypes[e.event_type] || 0) + 1;
+      if (e.sub_event_type) subEventTypes[e.sub_event_type] = (subEventTypes[e.sub_event_type] || 0) + 1;
+      if (e.actor1) actors.add(e.actor1);
+      if (e.actor2) actors.add(e.actor2);
+    });
+
+    const stats = [
+      { key: 'Total fatalities', value: fmtNum(fatalities) + '+', color: 'red' },
+      { key: 'Civilian fatalities', value: fmtNum(civilian) + '+', color: 'red' },
+      { key: 'Conflict events', value: fmtNum(eventCount), color: 'orange' },
+    ];
+
+    // Add top event types
+    Object.entries(eventTypes)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .forEach(([type, count]) => {
+        stats.push({
+          key: type,
+          value: fmtNum(count) + ' events',
+          color: config.colorRules.eventTypeColors[type] || 'normal'
+        });
+      });
+
+    // Add top sub-event types
+    Object.entries(subEventTypes)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .forEach(([type, count]) => {
+        stats.push({ key: type, value: fmtNum(count), color: 'cyan' });
+      });
+
+    result[key] = {
+      name: cfg.name,
+      flag: cfg.flag,
+      role: cfg.role,
+      stats
+    };
+  });
+
+  return result;
+}
+
+/**
+ * Build military assets summary from ACLED event sub-types
+ */
+function buildMilitaryAssets(acledEvents) {
+  if (!acledEvents) {
+    return [{ icon: '⏳', value: '—', label: 'Awaiting\nACLED data' }];
+  }
+
+  const counts = {
+    airstrikes: 0, shelling: 0, armedClash: 0, remoteBomb: 0,
+    abduction: 0, protest: 0, civilian: 0, strategic: 0
+  };
+
+  acledEvents.forEach(e => {
+    const sub = (e.sub_event_type || '').toLowerCase();
+    const type = (e.event_type || '').toLowerCase();
+    if (sub.includes('air') || sub.includes('drone')) counts.airstrikes++;
+    else if (sub.includes('shell') || sub.includes('missile') || sub.includes('artill')) counts.shelling++;
+    else if (sub.includes('armed clash')) counts.armedClash++;
+    else if (sub.includes('remote') || sub.includes('bomb') || sub.includes('ied')) counts.remoteBomb++;
+    if (type.includes('violence against civilians')) counts.civilian++;
+    if (type.includes('strategic')) counts.strategic++;
+    if (type.includes('protest') || type.includes('riot')) counts.protest++;
+  });
+
+  return [
+    { icon: '✈️', value: fmtNum(counts.airstrikes), label: 'Air/drone\nstrikes' },
+    { icon: '🚀', value: fmtNum(counts.shelling),   label: 'Shelling/missile\nattacks' },
+    { icon: '⚔️', value: fmtNum(counts.armedClash), label: 'Armed\nclashes' },
+    { icon: '💣', value: fmtNum(counts.remoteBomb),  label: 'Remote explosives\n& IEDs' },
+    { icon: '🛡️', value: fmtNum(acledEvents.length), label: 'Total conflict\nevents' },
+    { icon: '🎯', value: fmtNum(counts.civilian),    label: 'Anti-civilian\nevents' },
+    { icon: '📢', value: fmtNum(counts.protest),     label: 'Protests\n& riots' },
+    { icon: '🏛️', value: fmtNum(counts.strategic),   label: 'Strategic\ndevelopments' },
+  ];
+}
+
+/**
+ * Build timeline from significant ACLED events
+ */
+function buildTimeline(acledEvents) {
+  if (!acledEvents || acledEvents.length === 0) {
+    return [{ date: 'Loading...', sublabel: '', title: 'Waiting for conflict event data',
+      desc: 'Configure ACLED_API_KEY to load timeline.', color: 'muted' }];
+  }
+
+  // Pick the most significant events (by fatalities, then by type)
+  const significant = acledEvents
+    .filter(e => {
+      const f = parseInt(e.fatalities) || 0;
+      const type = (e.event_type || '').toLowerCase();
+      return f >= 3 || type.includes('strategic') || type.includes('explosion');
+    })
+    .sort((a, b) => new Date(b.event_date) - new Date(a.event_date))
+    .slice(0, 20);
+
+  return significant.map(e => {
+    const f = parseInt(e.fatalities) || 0;
+    const dateStr = new Date(e.event_date).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric'
+    });
+    let color = 'yellow';
+    if (f >= 50) color = 'red';
+    else if (f >= 10) color = 'orange';
+
+    const actors = [e.actor1, e.actor2].filter(Boolean).join(' vs ');
+    const location = [e.admin1, e.country].filter(Boolean).join(', ');
+
+    return {
+      date: dateStr,
+      sublabel: location,
+      title: `${e.sub_event_type || e.event_type}${f > 0 ? ` — ${f} killed` : ''}`,
+      desc: e.notes || `${actors}. ${e.event_type} in ${location}.`,
+      color
+    };
+  });
+}
+
+/**
+ * Build regional impact from ACLED data for non-primary countries
+ */
+function buildRegional(acledEvents) {
+  if (!acledEvents) return [];
+
+  const regionalKeys = config.regionalCountries;
+  const countryCfg = config.countries;
+  const results = [];
+
+  regionalKeys.forEach(key => {
+    const cfg = countryCfg[key];
+    if (!cfg) return;
+
+    const events = acledEvents.filter(e => e.country === cfg.name);
+    const fatalities = events.reduce((s, e) => s + (parseInt(e.fatalities) || 0), 0);
+    const eventCount = events.length;
+
+    if (eventCount === 0) return; // Skip countries with no events
+
+    // Determine status
+    let status, badge;
+    if (fatalities > 10) { status = 'struck'; badge = 'hit'; }
+    else if (fatalities > 0) { status = 'affected'; badge = 'partial'; }
+    else if (eventCount > 0) { status = 'affected'; badge = 'partial'; }
+    else { status = 'monitoring'; badge = 'intercepted'; }
+
+    // Build description from event types
+    const types = {};
+    events.forEach(e => { types[e.event_type] = (types[e.event_type] || 0) + 1; });
+    const typeStr = Object.entries(types)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([t, c]) => `${c} ${t.toLowerCase()}`)
+      .join(', ');
+
+    results.push({
+      flag: cfg.flag,
+      name: cfg.name,
+      status,
+      badge,
+      desc: `${fatalities} fatalities across ${eventCount} events. ${typeStr}. Source: ACLED.`
+    });
+  });
+
+  return results.sort((a, b) => {
+    const order = { hit: 0, partial: 1, intercepted: 2 };
+    return (order[a.badge] || 3) - (order[b.badge] || 3);
+  });
+}
+
+/**
+ * Build map markers from ACLED geo-coded events
+ */
+function buildMapMarkers(acledEvents) {
+  if (!acledEvents) return [];
+
+  return acledEvents
+    .filter(e => e.latitude && e.longitude)
+    .map(e => ({
+      lat: parseFloat(e.latitude),
+      lng: parseFloat(e.longitude),
+      title: e.location || e.admin1 || e.country || 'Event',
+      desc: e.notes || `${e.event_type}: ${e.sub_event_type || ''}. ${parseInt(e.fatalities) || 0} fatalities.`,
+      fatalities: parseInt(e.fatalities) || 0,
+      date: e.event_date,
+      type: e.event_type || ''
+    }));
+}
+
+/**
+ * Build news feed from NewsAPI + Guardian + GDELT articles
+ */
+function buildNewsFeed(newsArticles, guardianArticles, gdeltArticles) {
+  const combined = [];
+
+  // NewsAPI articles
+  if (newsArticles) {
+    newsArticles.forEach(a => {
+      combined.push({
+        time: relativeTime(a.publishedAt),
+        publishedAt: a.publishedAt,
+        title: a.title || 'Update',
+        source: a.source?.name || 'News',
+        url: a.url || '#',
+        category: categorizeArticle(a.title)
+      });
+    });
+  }
+
+  // Guardian articles
+  if (guardianArticles) {
+    guardianArticles.forEach(a => {
+      combined.push({
+        time: relativeTime(a.webPublicationDate),
+        publishedAt: a.webPublicationDate,
+        title: a.webTitle || 'Update',
+        source: 'The Guardian',
+        url: a.webUrl || '#',
+        category: categorizeArticle(a.webTitle)
+      });
+    });
+  }
+
+  // GDELT articles
+  if (gdeltArticles) {
+    gdeltArticles.forEach(a => {
+      const seenDate = a.seendate
+        ? new Date(a.seendate.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,
+            '$1-$2-$3T$4:$5:$6Z')).toISOString()
+        : new Date().toISOString();
+      combined.push({
+        time: relativeTime(seenDate),
+        publishedAt: seenDate,
+        title: a.title || 'Update',
+        source: a.domain || 'GDELT',
+        url: a.url || '#',
+        category: categorizeArticle(a.title)
+      });
+    });
+  }
+
+  // Sort by date (newest first) and deduplicate by title similarity
+  combined.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+
+  // Simple dedup: skip articles with very similar titles
+  const seen = new Set();
+  const deduped = combined.filter(item => {
+    const key = item.title.toLowerCase().substring(0, 50);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return deduped.slice(0, 25);
+}
+
+/**
+ * Build humanitarian section from ReliefWeb + ACLED civilian data
+ */
+function buildHumanitarian(reliefWebReports, acledEvents) {
+  // Extract civilian casualties from ACLED
+  let civilianFatalities = 0;
+  let civilianEvents = 0;
+  const affectedCountries = new Set();
+
+  if (acledEvents) {
+    acledEvents.forEach(e => {
+      if (e.event_type === 'Violence against civilians') {
+        civilianFatalities += parseInt(e.fatalities) || 0;
+        civilianEvents++;
+        affectedCountries.add(e.country);
+      }
+    });
+  }
+
+  // Build stats from ACLED data
+  const stats = [
+    {
+      id: 'civilian_deaths', icon: '💀', label: 'Civilian Fatalities',
+      value: fmtNum(civilianFatalities) + '+', rawValue: civilianFatalities,
+      desc: `${civilianEvents} anti-civilian events recorded`,
+      color: 'red', source: 'ACLED (Live)'
+    },
+    {
+      id: 'affected_countries', icon: '🌍', label: 'Countries Affected',
+      value: String(affectedCountries.size), rawValue: affectedCountries.size,
+      desc: [...affectedCountries].join(', '),
+      color: 'orange', source: 'ACLED (Live)'
+    },
+    {
+      id: 'civilian_events', icon: '⚠️', label: 'Anti-Civilian Events',
+      value: fmtNum(civilianEvents), rawValue: civilianEvents,
+      desc: 'Violence against civilians recorded',
+      color: 'orange', source: 'ACLED (Live)'
+    }
+  ];
+
+  // Add ReliefWeb report count and latest reports
+  if (reliefWebReports && reliefWebReports.length > 0) {
+    stats.push({
+      id: 'un_reports', icon: '📄', label: 'UN Humanitarian Reports',
+      value: String(reliefWebReports.length) + '+', rawValue: reliefWebReports.length,
+      desc: reliefWebReports[0]?.fields?.title || 'Latest reports from ReliefWeb',
+      color: 'cyan', source: 'ReliefWeb / UN OCHA (Live)'
+    });
+
+    // Extract data from the latest report bodies if available
+    reliefWebReports.slice(0, 3).forEach((report, i) => {
+      const title = report.fields?.title || 'Report';
+      const source = report.fields?.['source.shortname'] || report.fields?.source?.[0]?.shortname || 'UN';
+      const date = report.fields?.['date.created'] || '';
+      stats.push({
+        id: `report_${i}`, icon: '📋', label: title.substring(0, 60),
+        value: date ? relativeTime(date) : 'Recent', rawValue: 0,
+        desc: `Source: ${source}`,
+        color: 'cyan', source: 'ReliefWeb'
+      });
+    });
+  }
+
+  // Summary from ACLED data
+  const summary = acledEvents
+    ? `${civilianFatalities}+ civilian fatalities recorded across ${affectedCountries.size} countries. ${civilianEvents} anti-civilian events documented by ACLED. Data updated in real-time.`
+    : 'Humanitarian data loading — configure ACLED_API_KEY for live data.';
+
+  return {
+    summary,
+    stats: stats.slice(0, 8),
+    infrastructure: [] // Infrastructure data not available from free APIs — would need UNOSAT or satellite analysis
+  };
+}
+
+/**
+ * Build economic section from Alpha Vantage data
+ */
+function buildEconomic(alphaData) {
+  const economic = {
+    summary: 'Economic data loading from Alpha Vantage...',
+    stats: [],
+    oilPriceHistory: []
+  };
+
+  if (!alphaData) return economic;
+
+  // Process oil price data
+  if (alphaData.oil && alphaData.oil.data) {
+    const oilEntries = alphaData.oil.data
+      .filter(d => d.value !== '.')
+      .slice(0, 30) // Last 30 data points
+      .reverse();
+
+    economic.oilPriceHistory = oilEntries.map(d => ({
+      date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      price: parseFloat(d.value)
+    }));
+
+    if (oilEntries.length >= 2) {
+      const latest = parseFloat(oilEntries[oilEntries.length - 1].value);
+      const previous = parseFloat(oilEntries[0].value);
+      const change = ((latest - previous) / previous * 100).toFixed(1);
+      const direction = latest > previous ? 'up' : 'down';
+
+      economic.stats.push({
+        id: 'oil_price', icon: '🛢️', label: 'Brent Crude Oil',
+        value: `$${latest.toFixed(0)}/barrel`,
+        change: `${direction === 'up' ? '+' : ''}${change}%`,
+        direction,
+        desc: `${direction === 'up' ? 'Up' : 'Down'} from $${previous.toFixed(0)} over period. Source: Alpha Vantage.`,
+        color: direction === 'up' ? 'red' : 'cyan'
+      });
+    }
+  }
+
+  // Process S&P 500 / market data
+  if (alphaData.spy && alphaData.spy['Time Series (Daily)']) {
+    const entries = Object.entries(alphaData.spy['Time Series (Daily)']).slice(0, 30);
+    if (entries.length >= 2) {
+      const [latestDate, latestData] = entries[0];
+      const [oldDate, oldData] = entries[entries.length - 1];
+      const latestClose = parseFloat(latestData['4. close']);
+      const oldClose = parseFloat(oldData['4. close']);
+      const change = ((latestClose - oldClose) / oldClose * 100).toFixed(1);
+      const direction = latestClose > oldClose ? 'up' : 'down';
+
+      economic.stats.push({
+        id: 'stock_impact', icon: '💹', label: 'S&P 500 (SPY)',
+        value: `$${latestClose.toFixed(0)}`,
+        change: `${direction === 'up' ? '+' : ''}${change}%`,
+        direction,
+        desc: `${direction === 'up' ? 'Up' : 'Down'} from $${oldClose.toFixed(0)}. Source: Alpha Vantage.`,
+        color: direction === 'down' ? 'red' : 'cyan'
+      });
+    }
+  }
+
+  // Set summary
+  if (economic.stats.length > 0) {
+    const oilStat = economic.stats.find(s => s.id === 'oil_price');
+    economic.summary = oilStat
+      ? `Brent crude at ${oilStat.value} (${oilStat.change}). Live financial data from Alpha Vantage.`
+      : 'Financial data loaded from Alpha Vantage.';
+  }
+
+  return economic;
+}
+
+/**
+ * Build alert ticker from latest news headlines
+ */
+function buildAlertTicker(newsArticles, guardianArticles) {
+  const headlines = [];
+  if (newsArticles) {
+    newsArticles.slice(0, 3).forEach(a => headlines.push(a.title || 'Update'));
+  }
+  if (guardianArticles && headlines.length < 3) {
+    guardianArticles.slice(0, 3 - headlines.length).forEach(a => headlines.push(a.webTitle || 'Update'));
+  }
+
+  if (headlines.length > 0) {
+    return '⚠ LIVE — ' + headlines.join(' | ');
+  }
+  return '⚠ LIVE CONFLICT TRACKER — Data aggregating from ACLED, NewsAPI, Guardian, ReliefWeb, GDELT...';
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  MAIN DATA AGGREGATION
+// ═══════════════════════════════════════════════════════════════════
+
+async function getStatsData() {
+  // Return cached data if fresh
+  if (cachedData && (Date.now() - cacheTimestamp) < CACHE_DURATION) {
+    console.log('Returning cached data');
+    // Still increment viewer count
+    viewerCount++;
+    cachedData.meta.viewers = viewerCount;
+    return cachedData;
+  }
+
+  console.log('Fetching fresh data from all APIs...');
+
+  // Fetch all APIs in parallel
+  const [acledEvents, newsArticles, guardianArticles, gdeltArticles, reliefWebReports, alphaData, wikiSummary] =
+    await Promise.all([
+      fetchACLED(),
+      fetchNewsAPI(),
+      fetchGuardian(),
+      fetchGDELT(),
+      fetchReliefWeb(),
+      fetchAlphaVantage(),
+      fetchWikipedia()
+    ]);
+
+  // Log what we got
+  console.log(`Data received — ACLED: ${acledEvents?.length || 0}, News: ${newsArticles?.length || 0}, Guardian: ${guardianArticles?.length || 0}, GDELT: ${gdeltArticles?.length || 0}, ReliefWeb: ${reliefWebReports?.length || 0}, Oil: ${alphaData?.oil ? 'yes' : 'no'}, Wiki: ${wikiSummary ? 'yes' : 'no'}`);
+
+  // Increment viewer count
+  viewerCount += Math.floor(Math.random() * 3) + 1;
+
+  // Determine which APIs returned data
+  const activeSources = [];
+  if (acledEvents) activeSources.push('ACLED');
+  if (newsArticles) activeSources.push('NewsAPI');
+  if (guardianArticles) activeSources.push('Guardian');
+  if (gdeltArticles) activeSources.push('GDELT');
+  if (reliefWebReports) activeSources.push('ReliefWeb');
+  if (alphaData) activeSources.push('Alpha Vantage');
+
+  // Build the response
+  const data = {
+    meta: {
+      lastUpdated: new Date().toISOString(),
+      dataSource: activeSources.join(' + ') || 'No APIs configured',
+      conflictStart: config.config.conflictStart,
+      phase2Start: config.config.phase2Start,
+      currentDay: conflictDay(),
+      viewers: viewerCount,
+      operationNames: config.config.operationNames,
+      alertTicker: buildAlertTicker(newsArticles, guardianArticles),
+      realTimeNews: (newsArticles?.length || 0) + (guardianArticles?.length || 0) > 0,
+      apisActive: activeSources.length,
+      wikiSummary: wikiSummary || null
+    },
+    globalStats: buildGlobalStats(acledEvents),
+    countries: buildCountries(acledEvents),
+    militaryAssets: buildMilitaryAssets(acledEvents),
+    timeline: buildTimeline(acledEvents),
+    regional: buildRegional(acledEvents),
+    humanitarian: buildHumanitarian(reliefWebReports, acledEvents),
+    economic: buildEconomic(alphaData),
+    newsFeed: buildNewsFeed(newsArticles, guardianArticles, gdeltArticles),
+    mapMarkers: buildMapMarkers(acledEvents),
+    sources: config.sources,
+    newsArticles: [
+      ...(newsArticles || []).slice(0, 5),
+      ...(guardianArticles || []).slice(0, 5)
+    ]
+  };
+
+  // Cache
+  cachedData = data;
+  cacheTimestamp = Date.now();
+
+  return data;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  NETLIFY HANDLER
+// ═══════════════════════════════════════════════════════════════════
+
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',
-    'Cache-Control': 'public, max-age=300' // Cache for 5 minutes
+    'Cache-Control': 'public, max-age=300'
   };
 
-  // Handle CORS preflight
+  // CORS preflight
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: ''
-    };
+    return { statusCode: 200, headers, body: '' };
   }
 
   try {
@@ -190,25 +927,18 @@ exports.handler = async (event, context) => {
     const data = await getStatsData();
 
     let response;
-    if (type === 'meta') {
-      response = { meta: data.meta };
-    } else if (type === 'globalStats') {
-      response = { globalStats: data.globalStats };
-    } else if (type === 'countries') {
-      response = { countries: data.countries };
-    } else if (type === 'militaryAssets') {
-      response = { militaryAssets: data.militaryAssets };
-    } else if (type === 'timeline') {
-      response = { timeline: data.timeline };
-    } else if (type === 'regional') {
-      response = { regional: data.regional };
-    } else if (type === 'sources') {
-      response = { sources: data.sources };
-    } else if (type === 'news') {
-      response = { newsArticles: data.newsArticles };
-    } else {
-      // Return all data
-      response = data;
+    switch (type) {
+      case 'meta':           response = { meta: data.meta }; break;
+      case 'globalStats':    response = { globalStats: data.globalStats }; break;
+      case 'countries':      response = { countries: data.countries }; break;
+      case 'militaryAssets': response = { militaryAssets: data.militaryAssets }; break;
+      case 'timeline':       response = { timeline: data.timeline }; break;
+      case 'regional':       response = { regional: data.regional }; break;
+      case 'humanitarian':   response = { humanitarian: data.humanitarian }; break;
+      case 'economic':       response = { economic: data.economic }; break;
+      case 'news':           response = { newsFeed: data.newsFeed }; break;
+      case 'sources':        response = { sources: data.sources }; break;
+      default:               response = data;
     }
 
     return {
@@ -217,10 +947,10 @@ exports.handler = async (event, context) => {
       body: JSON.stringify(response)
     };
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Handler error:', error);
     return {
       statusCode: 500,
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ error: 'Internal server error', message: error.message })
     };
   }

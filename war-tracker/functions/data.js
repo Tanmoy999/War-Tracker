@@ -1,296 +1,69 @@
-// Real-time statistics data store
-// This file contains the actual data values that get merged with live news
-
-let globalViewers = parseInt(process.env.VIEWER_COUNT || '0', 10) || 847;
+// ─── CONFIGURATION ONLY ─────────────────────────────────────
+// No hardcoded statistics. All data comes from live APIs.
+// This file only contains editorial context and structure config.
 
 module.exports = {
-  lastUpdated: new Date().toISOString(),
-  meta: {
-    conflictStart: "2025-06-13",
-    phase2Start: "2026-02-28",
-    currentDay: 6,
-    viewers: globalViewers,
-    operationNames: ["Operation Roaring Lion", "Operation Epic Fury", "Operation True Promise IV"],
+  // ─── Conflict metadata (editorial facts, not statistics) ──
+  config: {
+    conflictStart: '2025-06-13',
+    phase2Start: '2026-02-28',
+    operationNames: [
+      'Operation Roaring Lion',
+      'Operation Epic Fury',
+      'Operation True Promise IV'
+    ],
+    // Search keywords for API queries
+    searchKeywords: 'Iran Israel conflict war 2026',
+    searchKeywordsHumanitarian: 'Iran humanitarian crisis 2026',
   },
-  globalStats: [
-    {
-      id: "total_deaths",
-      label: "Total Deaths — All Sides",
-      value: "2,400+",
-      rawValue: 2400,
-      sub: "Verified by Hengaw & multiple agencies",
-      source: "As of March 7, 2026 (Live)",
-      color: "red"
-    },
-    {
-      id: "iran_deaths",
-      label: "Deaths in Iran",
-      value: "2,090+",
-      rawValue: 2090,
-      sub: "~310 civilians (13%) · ~1,780 military",
-      source: "Source: Hengaw Organization for Human Rights (Live)",
-      color: "orange"
-    },
-    {
-      id: "israel_deaths",
-      label: "Deaths in Israel",
-      value: "28",
-      rawValue: 28,
-      sub: "~3,238 wounded · 9 killed in single Beit Shemesh strike",
-      source: "Source: Israeli MoH / Al Jazeera (Live)",
-      color: "yellow"
-    },
-    {
-      id: "us_deaths",
-      label: "US Soldiers Killed",
-      value: "6",
-      rawValue: 6,
-      sub: "2 bodies recovered from regional facility",
-      source: "Source: CENTCOM confirmed (Live)",
-      color: "cyan"
-    },
-    {
-      id: "gulf_deaths",
-      label: "Gulf States Killed",
-      value: "9+",
-      rawValue: 9,
-      sub: "Kuwait · Bahrain · Qatar",
-      source: "CNN · Al Jazeera (Live)",
-      color: "muted"
-    },
-    {
-      id: "lebanon_deaths",
-      label: "Lebanon Deaths",
-      value: "50+",
-      rawValue: 50,
-      sub: "335+ wounded from Israeli air strikes",
-      source: "Lebanese Health Ministry (Live)",
-      color: "orange"
-    }
-  ],
+
+  // ─── Tracked countries with metadata ──────────────────────
   countries: {
-    iran: {
-      name: "Iran",
-      flag: "🇮🇷",
-      role: "Defending",
-      stats: [
-        { key: "Civilian deaths", value: "310+", color: "red" },
-        { key: "Military deaths", value: "2,090+", color: "red" },
-        { key: "Provinces struck", value: "24 of 31", color: "orange" },
-        { key: "Cities targeted", value: "163", color: "orange" },
-        { key: "Missiles sent to Israel", value: "550+ ballistic", color: "cyan" },
-        { key: "Drones launched", value: "1,000+", color: "cyan" },
-        { key: "Bases engaged (region)", value: "27 US bases", color: "orange" },
-        { key: "Supreme Leader", value: "Khamenei — Killed", color: "red" }
-      ]
-    },
-    israel: {
-      name: "Israel",
-      flag: "🇮🇱",
-      role: "Attacker",
-      stats: [
-        { key: "Civilian deaths", value: "28", color: "red" },
-        { key: "Wounded", value: "3,238+", color: "orange" },
-        { key: "Munitions dropped on Iran", value: "1,200+", color: "cyan" },
-        { key: "Provinces struck in Iran", value: "24", color: "cyan" },
-        { key: "Reservists called up", value: "70,000", color: "orange" },
-        { key: "Iran senior officials killed", value: "8+", color: "red" },
-        { key: "Attack waves on Iran", value: "10+", color: "cyan" },
-        { key: "Operation name", value: "Roaring Lion", color: "normal" }
-      ]
-    },
-    usa: {
-      name: "USA",
-      flag: "🇺🇸",
-      role: "Attacker",
-      stats: [
-        { key: "Soldiers killed", value: "6", color: "red" },
-        { key: "Fighter jets crashed (Kuwait)", value: "Several", color: "orange" },
-        { key: "Iranian ships destroyed", value: "17", color: "cyan" },
-        { key: "Nuclear sites targeted", value: "3+", color: "orange" },
-        { key: "Objective", value: "Regime Change", color: "normal" },
-        { key: "5th Fleet HQ struck by Iran", value: "Multiple times", color: "red" },
-        { key: "Operation name", value: "Epic Fury", color: "normal" },
-        { key: "Presidential statement", value: "Feb 28 at 2:30AM EST", color: "normal" }
-      ]
+    iran:        { name: 'Iran',          flag: '🇮🇷', iso3: 'IRN', iso: 364, role: 'Defending' },
+    israel:      { name: 'Israel',        flag: '🇮🇱', iso3: 'ISR', iso: 376, role: 'Attacker' },
+    usa:         { name: 'United States', flag: '🇺🇸', iso3: 'USA', iso: 840, role: 'Attacker' },
+    lebanon:     { name: 'Lebanon',       flag: '🇱🇧', iso3: 'LBN', iso: 422, role: 'Affected' },
+    iraq:        { name: 'Iraq',          flag: '🇮🇶', iso3: 'IRQ', iso: 368, role: 'Affected' },
+    qatar:       { name: 'Qatar',         flag: '🇶🇦', iso3: 'QAT', iso: 634, role: 'Affected' },
+    bahrain:     { name: 'Bahrain',       flag: '🇧🇭', iso3: 'BHR', iso: 48,  role: 'Affected' },
+    kuwait:      { name: 'Kuwait',        flag: '🇰🇼', iso3: 'KWT', iso: 414, role: 'Affected' },
+    saudiarabia: { name: 'Saudi Arabia',  flag: '🇸🇦', iso3: 'SAU', iso: 682, role: 'Affected' },
+    jordan:      { name: 'Jordan',        flag: '🇯🇴', iso3: 'JOR', iso: 400, role: 'Affected' },
+    syria:       { name: 'Syria',         flag: '🇸🇾', iso3: 'SYR', iso: 760, role: 'Affected' },
+  },
+
+  // ─── Primary belligerents (for detailed country cards) ────
+  primaryCountries: ['iran', 'israel', 'usa'],
+
+  // ─── Regional countries (for regional impact section) ─────
+  regionalCountries: ['lebanon', 'iraq', 'qatar', 'bahrain', 'kuwait', 'saudiarabia', 'jordan', 'syria'],
+
+  // ─── Color coding rules ───────────────────────────────────
+  colorRules: {
+    fatalityThresholds: { red: 100, orange: 10, yellow: 1, muted: 0 },
+    eventTypeColors: {
+      'Battles': 'red',
+      'Explosions/Remote violence': 'orange',
+      'Violence against civilians': 'red',
+      'Strategic developments': 'cyan',
+      'Protests': 'yellow',
+      'Riots': 'orange'
     }
   },
-  militaryAssets: [
-    { icon: "🚢", value: "17", label: "Iranian ships\ndestroyed by US" },
-    { icon: "🚀", value: "1,200+", label: "Israeli munitions\ndropped on Iran" },
-    { icon: "💣", value: "550+", label: "Iranian ballistic\nmissiles fired" },
-    { icon: "🛸", value: "1,000+", label: "Iranian drones\ndeployed" },
-    { icon: "🛡️", value: "65+", label: "Missiles intercepted\nover Qatar alone" },
-    { icon: "🏙️", value: "163", label: "Iranian cities\ntargeted" },
-    { icon: "☢️", value: "3+", label: "Nuclear sites\nstruck (US)" },
-    { icon: "✈️", value: "200+", label: "Israeli jets used\nin first wave" }
-  ],
-  timeline: [
-    {
-      date: "Jun 13, 2025",
-      sublabel: "12-Day War Begins",
-      title: "Israel strikes Iran — The 12-Day War",
-      desc: "Israel bombs Iranian nuclear and military facilities in a surprise attack. Kills IRGC commanders, nuclear scientists. Iran retaliates with 550+ ballistic missiles and 1,000+ drones.",
-      color: "orange"
-    },
-    {
-      date: "Jun 22, 2025",
-      sublabel: "",
-      title: "US enters war — strikes Natanz, Fordow, Isfahan",
-      desc: "Bunker-buster strikes on Iran's three primary nuclear facilities. Iran retaliates against Al Udeid base in Qatar.",
-      color: "yellow"
-    },
-    {
-      date: "Jun 24, 2025",
-      sublabel: "",
-      title: "Ceasefire brokered by US",
-      desc: "Fragile ceasefire ends 12-Day War. Final toll: 1,190 killed in Iran, 28 in Israel. Iran's air defenses largely destroyed.",
-      color: "cyan"
-    },
-    {
-      date: "Feb 27, 2026",
-      sublabel: "",
-      title: "IAEA discovers hidden enriched uranium",
-      desc: "IAEA finds Iran concealed highly enriched uranium in undamaged underground facility. Declares cannot confirm peaceful purposes.",
-      color: "yellow"
-    },
-    {
-      date: "Feb 28, 2026",
-      sublabel: "2:30 AM EST",
-      title: "🔴 Operation Roaring Lion + Epic Fury — Day 1",
-      desc: "US & Israel begin coordinated strikes on Tehran, Isfahan, Qom, Karaj, Kermanshah. Supreme Leader Khamenei's compound destroyed. Trump announces regime change as objective.",
-      color: "red"
-    },
-    {
-      date: "Mar 1, 2026",
-      sublabel: "",
-      title: "Khamenei confirmed killed — Iran launches Operation True Promise IV",
-      desc: "Iran confirms Supreme Leader's death. IRGC vows 'heaviest offensive in history.' Strikes 27 US bases across Middle East. Iran death toll hits 555.",
-      color: "red"
-    },
-    {
-      date: "Mar 2, 2026",
-      sublabel: "",
-      title: "IRGC HQ destroyed · Khamenei's wife dies",
-      desc: "US confirms 6 soldiers killed. CENTCOM destroys 17 Iranian naval ships. Israel bombs Assembly of Experts mid-meeting. Death toll in Iran surpasses 1,045.",
-      color: "red"
-    },
-    {
-      date: "Mar 3–4, 2026",
-      sublabel: "",
-      title: "State broadcaster hit · 10th wave of Israeli strikes",
-      desc: "IRIB broadcaster headquarters struck. Iran parliament targeted. Ground forces and naval operations announced. Total deaths surpass 2,400. Trump: 'Could last a month.'",
-      color: "red"
-    }
-  ],
-  regional: [
-    { flag: "🇧🇭", name: "Bahrain", status: "struck", badge: "hit", desc: "US 5th Fleet HQ struck multiple times. International airport drone-hit. Residential buildings in Manama struck. 1 Asian worker killed." },
-    { flag: "🇶🇦", name: "Qatar", status: "struck", badge: "hit", desc: "Al Udeid base hit by 2 ballistic missiles. Radar installation drone-struck. All flights suspended indefinitely. Schools moved to remote. 65+ missiles intercepted." },
-    { flag: "🇰🇼", name: "Kuwait", status: "affected", badge: "partial", desc: "Multiple US warplanes crashed (crews survived). 1 girl killed from shrapnel injuries. 3+ killed total." },
-    { flag: "🇸🇦", name: "Saudi Arabia", status: "affected", badge: "partial", desc: "Riyadh and Eastern Province (oil infrastructure) targeted. King Abdulaziz Air Base struck. No confirmed casualties reported." },
-    { flag: "🇯🇴", name: "Jordan", status: "intercepted", badge: "intercepted", desc: "49 drones and ballistic missiles intercepted. Localized property damage from fragments. No casualties." },
-    { flag: "🇮🇶", name: "Iraq", status: "struck", badge: "hit", desc: "Erbil International Airport area struck with visible smoke. Region destabilized. Iranian proxy groups active." },
-    { flag: "🇱🇧", name: "Lebanon", status: "struck", badge: "hit", desc: "50+ killed, 335+ wounded from Israeli air strikes. Hezbollah launched rocket+drone attack on Haifa military base in retaliation." },
-    { flag: "🌊", name: "Red Sea / Suez", status: "threatened", badge: "partial", desc: "Houthi threats resumed. Maersk rerouting vessels via Cape of Good Hope instead of Suez Canal due to risk." }
-  ],
-  humanitarian: {
-    summary: "The humanitarian crisis is rapidly deteriorating across Iran and the wider region. Multiple cities remain without power or water after sustained aerial bombardment.",
-    stats: [
-      { id: "displaced", icon: "🏚️", label: "Displaced People", value: "500,000+", rawValue: 500000, desc: "Fleeing targeted cities across 24 provinces", color: "red", source: "UNHCR estimate" },
-      { id: "hospitals", icon: "🏥", label: "Hospitals Damaged/Destroyed", value: "47", rawValue: 47, desc: "Including 12 completely destroyed", color: "orange", source: "WHO / Iranian Health Ministry" },
-      { id: "schools", icon: "🏫", label: "Schools Destroyed", value: "89", rawValue: 89, desc: "In targeted provinces — 340,000 students affected", color: "orange", source: "UNICEF" },
-      { id: "no_water", icon: "💧", label: "Without Clean Water", value: "3.5M", rawValue: 3500000, desc: "Water infrastructure destroyed in 8 provinces", color: "cyan", source: "UN OCHA" },
-      { id: "no_power", icon: "⚡", label: "Without Electricity", value: "2.1M", rawValue: 2100000, desc: "Power grid destroyed in Isfahan, Kermanshah, Qom", color: "yellow", source: "Iranian Power Ministry" },
-      { id: "food_insecure", icon: "🍞", label: "Food Insecure", value: "1.2M", rawValue: 1200000, desc: "Supply chains disrupted in conflict zones", color: "orange", source: "WFP" },
-      { id: "refugees", icon: "🚶", label: "Cross-border Refugees", value: "85,000+", rawValue: 85000, desc: "Fleeing to Turkey, Iraq, Pakistan, Afghanistan", color: "red", source: "UNHCR" },
-      { id: "medical_need", icon: "🚑", label: "Need Emergency Medical Aid", value: "180,000+", rawValue: 180000, desc: "Burns, blast injuries, crush syndrome", color: "red", source: "MSF / Iranian Red Crescent" }
-    ],
-    infrastructure: [
-      { type: "Power Plants", destroyed: 14, damaged: 31, icon: "⚡" },
-      { type: "Water Treatment", destroyed: 8, damaged: 19, icon: "💧" },
-      { type: "Bridges", destroyed: 23, damaged: 45, icon: "🌉" },
-      { type: "Communication Towers", destroyed: 67, damaged: 124, icon: "📡" },
-      { type: "Hospitals", destroyed: 12, damaged: 35, icon: "🏥" },
-      { type: "Schools", destroyed: 89, damaged: 156, icon: "🏫" }
-    ]
-  },
-  economic: {
-    summary: "The conflict has sent shockwaves through global energy markets and trade routes, with oil prices spiking to levels not seen since the 2022 crisis.",
-    stats: [
-      { id: "oil_price", icon: "🛢️", label: "Brent Crude Oil", value: "$127/barrel", change: "+42%", direction: "up", desc: "Highest since 2022. Strait of Hormuz tensions driving supply fears.", color: "red" },
-      { id: "iran_gdp", icon: "📉", label: "Iran GDP Impact", value: "-18%", change: "-18%", direction: "down", desc: "Estimated economic contraction in 2026. Oil exports halted. Sanctions tightened.", color: "red" },
-      { id: "trade_disruption", icon: "🚢", label: "Strait of Hormuz", value: "40% reduced", change: "-40%", direction: "down", desc: "$1.4 trillion annual oil flow threatened. Insurance premiums 800% higher.", color: "orange" },
-      { id: "stock_impact", icon: "💹", label: "Global Markets", value: "-6.2%", change: "-6.2%", direction: "down", desc: "S&P 500 fell 4.1%, FTSE -5.8%, Nikkei -6.2% in first week of Phase 2.", color: "orange" },
-      { id: "damage_estimate", icon: "💰", label: "Estimated Damage", value: "$280B+", change: "", direction: "none", desc: "Infrastructure, military, and economic damage across all countries and regions.", color: "yellow" },
-      { id: "shipping_cost", icon: "📦", label: "Shipping Costs", value: "+340%", change: "+340%", direction: "up", desc: "Container shipping rates for Middle East routes surged. Suez traffic diverted.", color: "orange" }
-    ],
-    oilPriceHistory: [
-      { date: "Jun 1", price: 78 },
-      { date: "Jun 13", price: 95 },
-      { date: "Jun 18", price: 108 },
-      { date: "Jun 22", price: 118 },
-      { date: "Jun 24", price: 105 },
-      { date: "Jul 2025", price: 89 },
-      { date: "Feb 27", price: 91 },
-      { date: "Feb 28", price: 112 },
-      { date: "Mar 1", price: 119 },
-      { date: "Mar 3", price: 124 },
-      { date: "Mar 5", price: 127 }
-    ]
-  },
-  newsFeed: [
-    { time: "1h ago", title: "IAEA: Iran's nuclear facilities 'beyond repair' after US bunker-buster strikes", source: "Reuters", url: "#", category: "nuclear" },
-    { time: "2h ago", title: "Iran's internet restored briefly — citizens share footage of devastation in Isfahan", source: "Iran International", url: "#", category: "humanitarian" },
-    { time: "3h ago", title: "Death toll in Iran surpasses 2,400 — Hengaw Organization report", source: "Al Jazeera", url: "#", category: "casualties" },
-    { time: "3h ago", title: "Pentagon briefing: 'All major Iranian air defenses neutralized' — Phase 2 goals on track", source: "CNN", url: "#", category: "military" },
-    { time: "4h ago", title: "Israel calls up additional 30,000 reservists amid Hezbollah rocket barrage on Haifa", source: "Times of Israel", url: "#", category: "military" },
-    { time: "5h ago", title: "Trump: 'Conflict could last a month' — Regime change remains core objective", source: "AP News", url: "#", category: "politics" },
-    { time: "5h ago", title: "EU foreign ministers call for immediate ceasefire — Borrell: 'Humanitarian catastrophe unfolding'", source: "France24", url: "#", category: "diplomacy" },
-    { time: "6h ago", title: "China and Russia condemn 'illegal aggression' — threaten economic countermeasures", source: "BBC", url: "#", category: "politics" },
-    { time: "7h ago", title: "CENTCOM confirms destruction of 17 Iranian naval vessels in Strait of Hormuz", source: "CENTCOM", url: "#", category: "military" },
-    { time: "8h ago", title: "Iran's IRGC vows 'unprecedented retaliation' — threatens to close Strait of Hormuz entirely", source: "The Guardian", url: "#", category: "military" },
-    { time: "9h ago", title: "UN Security Council emergency session — Russia and China veto ceasefire resolution", source: "UN News", url: "#", category: "diplomacy" },
-    { time: "10h ago", title: "Global anti-war protests erupt — millions march in London, Berlin, Istanbul, Jakarta", source: "DW News", url: "#", category: "politics" },
-    { time: "11h ago", title: "Oil surges past $127 as Strait of Hormuz traffic drops 40% — Goldman predicts $140", source: "Bloomberg", url: "#", category: "economic" },
-    { time: "12h ago", title: "Indian nationals evacuated from Iran and Gulf states — Operation Kaveri II launched", source: "NDTV", url: "#", category: "humanitarian" },
-    { time: "13h ago", title: "WHO warns of 'disease outbreak risk' in bombed Iranian cities — hospitals overwhelmed", source: "WHO", url: "#", category: "humanitarian" },
-    { time: "14h ago", title: "500,000+ displaced in Iran — UNHCR opens emergency corridor via Turkey", source: "UNHCR", url: "#", category: "humanitarian" },
-    { time: "15h ago", title: "Satellite imagery reveals near-total destruction of Natanz nuclear complex", source: "BBC", url: "#", category: "nuclear" },
-    { time: "16h ago", title: "Hezbollah launches 200+ rockets at Haifa in retaliation for Israeli Lebanon strikes", source: "Al Jazeera", url: "#", category: "military" },
-    { time: "18h ago", title: "Iran's IRIB state broadcaster headquarters destroyed — communications blackout spreads", source: "The New York Times", url: "#", category: "military" },
-    { time: "20h ago", title: "UN Human Rights Council condemns 'disproportionate use of force' against civilians", source: "UN News", url: "#", category: "diplomacy" },
-    { time: "22h ago", title: "Maersk suspends all Red Sea shipping — Houthis threaten attacks on US-allied vessels", source: "Financial Times", url: "#", category: "economic" },
-    { time: "1d ago", title: "MSF deploys emergency surgical teams to Isfahan and Kermanshah — 'Carnage beyond belief'", source: "MSF", url: "#", category: "humanitarian" },
-    { time: "1d ago", title: "Pakistan closes border with Iran citing 'security concerns' — 15,000 refugees stranded", source: "Dawn", url: "#", category: "humanitarian" },
-    { time: "1d ago", title: "US Defense Secretary: 'Iran's IRGC command structure effectively decimated'", source: "Washington Post", url: "#", category: "military" },
-    { time: "1d ago", title: "Global food prices surge 8% amid shipping disruptions and oil shock", source: "The Economist", url: "#", category: "economic" }
-  ],
+
+  // ─── Data sources attribution ─────────────────────────────
   sources: [
-    "NewsAPI (Al Jazeera, CNN, BBC feeds)",
-    "Wikipedia — 2026 Iran Conflict",
-    "Hengaw Organization for Human Rights",
-    "CENTCOM (US Military)",
-    "Israeli Ministry of Health",
-    "Iranian Red Crescent Society",
-    "Lebanese Health Ministry",
-    "The Guardian API",
-    "UN OCHA",
-    "UNHCR",
-    "Reuters / AP / AFP",
-    "Bloomberg",
-    "MSF",
-    "UNICEF",
-    "WFP",
-    "BBC",
-    "CNN",
-    "The New York Times",
-    "Washington Post",
-    "Times of Israel",
-    "Iran International",
-    "France24",
-    "DW News",
-    "Financial Times",
-    "The Economist",
-    "WHO"
+    'ACLED (Armed Conflict Location & Event Data)',
+    'NewsAPI (Live)',
+    'The Guardian (Live)',
+    'GDELT Project',
+    'ReliefWeb (UN OCHA)',
+    'Alpha Vantage (Oil & Markets)',
+    'Wikipedia',
+    'UNHCR',
+    'WHO',
+    'MSF',
+    'UNICEF',
+    'Reuters / AP / AFP'
   ]
 };

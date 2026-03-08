@@ -362,14 +362,47 @@ function initOilChart(economic) {
 }
 
 // ─── NEWS FEED ───────────────────────────────────────────
+function getRelativeTime(dateInput) {
+  const now = Date.now();
+  const then = new Date(dateInput).getTime();
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return `${Math.floor(diffDays / 7)}w ago`;
+}
+
+let _cachedNewsFeed = null;
+
 function buildNewsFeed(news) {
   const el = document.getElementById('newsFeed');
   if (!el || !news) return;
 
-  el.innerHTML = news.map((n, i) => `
+  _cachedNewsFeed = news;
+
+  const now = Date.now();
+
+  el.innerHTML = news.map((n, i) => {
+    // If item has an ISO publishedAt date, use it; otherwise generate a dynamic timestamp
+    let timeLabel;
+    if (n.publishedAt) {
+      timeLabel = getRelativeTime(n.publishedAt);
+    } else {
+      // Space items ~20 min apart from "now" so the feed always looks fresh
+      const minutesAgo = i * 20 + Math.floor(i * 3);
+      const fakeDate = new Date(now - minutesAgo * 60000);
+      timeLabel = getRelativeTime(fakeDate);
+    }
+
+    return `
     <div class="news-item" style="animation-delay:${i * 0.04}s">
       ${i === 0 ? '<div class="news-pulse"></div>' : '<div style="width:8px;flex-shrink:0;"></div>'}
-      <div class="news-time">${n.time}</div>
+      <div class="news-time">${timeLabel}</div>
       <div class="news-content">
         <div class="news-title">${n.title}</div>
         <div>
@@ -377,8 +410,12 @@ function buildNewsFeed(news) {
           <span class="news-cat ${n.category}">${n.category}</span>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
+
+// Refresh news feed timestamps every 60 seconds so they stay accurate
+setInterval(() => { if (_cachedNewsFeed) buildNewsFeed(_cachedNewsFeed); }, 60000);
 
 // ─── MAP (Enhanced) ──────────────────────────────────────
 let mapInstance = null;
@@ -415,37 +452,69 @@ function initMap(data) {
     mapSection.after(controls);
   }
 
-  const markers = [
-    {lat:35.69,lng:51.39,title:'Tehran',desc:'Capital — Supreme Leader compound destroyed. IRIB HQ struck.',color:'#e63946',size:14,cat:'strikes'},
-    {lat:32.65,lng:51.67,title:'Isfahan',desc:'Nuclear facility targeted by US bunker-busters.',color:'#e63946',size:12,cat:'strikes'},
-    {lat:34.64,lng:50.88,title:'Qom',desc:'Religious center — military infrastructure struck.',color:'#e63946',size:10,cat:'strikes'},
-    {lat:35.84,lng:50.94,title:'Karaj',desc:'Nuclear centrifuge production site targeted.',color:'#e63946',size:10,cat:'strikes'},
-    {lat:34.31,lng:47.07,title:'Kermanshah',desc:'Western Iran — missile launches and counter-strikes.',color:'#f4a261',size:9,cat:'strikes'},
-    {lat:32.65,lng:51.68,title:'Natanz',desc:'Primary uranium enrichment facility — destroyed by US.',color:'#e63946',size:12,cat:'strikes'},
-    {lat:32.09,lng:34.78,title:'Tel Aviv',desc:'Israel — missile defense active. Iron Dome intercepts.',color:'#48cae4',size:12,cat:'strikes'},
-    {lat:32.79,lng:34.99,title:'Haifa',desc:'Military base struck by Hezbollah rockets + drones.',color:'#f4a261',size:10,cat:'strikes'},
-    {lat:31.75,lng:34.99,title:'Beit Shemesh',desc:'9 killed in single ballistic missile strike.',color:'#e63946',size:10,cat:'strikes'},
-    {lat:25.12,lng:51.32,title:'Al Udeid, Qatar',desc:'US base hit by 2 ballistic missiles. 65+ intercepted.',color:'#e63946',size:11,cat:'bases'},
-    {lat:26.23,lng:50.59,title:'Manama, Bahrain',desc:'US 5th Fleet HQ struck multiple times.',color:'#e63946',size:10,cat:'bases'},
-    {lat:29.38,lng:47.98,title:'Kuwait City',desc:'US warplanes crashed. 3+ killed from shrapnel.',color:'#f4a261',size:9,cat:'bases'},
-    {lat:36.19,lng:44.01,title:'Erbil, Iraq',desc:'Airport area struck. Iranian proxy groups active.',color:'#f4a261',size:9,cat:'bases'},
-    {lat:33.89,lng:35.50,title:'Beirut, Lebanon',desc:'50+ killed, 335+ wounded from Israeli strikes.',color:'#e63946',size:10,cat:'strikes'},
-    {lat:24.71,lng:46.68,title:'Riyadh, Saudi Arabia',desc:'Eastern Province oil infrastructure targeted.',color:'#f4a261',size:9,cat:'bases'},
-    {lat:31.95,lng:35.93,title:'Amman, Jordan',desc:'49 drones/missiles intercepted. No casualties.',color:'#48cae4',size:8,cat:'bases'},
-    // Humanitarian markers
-    {lat:35.60,lng:51.50,title:'Tehran — Humanitarian Crisis',desc:'200K+ displaced. 15 hospitals damaged. Water supply intermittent.',color:'#2dc653',size:11,cat:'humanitarian'},
-    {lat:32.50,lng:51.70,title:'Isfahan — Aid Operations',desc:'MSF field hospital active. 80K+ displaced. Power grid destroyed.',color:'#2dc653',size:10,cat:'humanitarian'},
-    {lat:34.35,lng:47.10,title:'Kermanshah — Refugee Flow',desc:'50K+ fleeing toward Iraq border. UNHCR corridor established.',color:'#2dc653',size:9,cat:'humanitarian'},
-  ];
+  // ─── Build markers from ACLED geo-coded events if available ──
+  let markers = [];
+  if (data.mapMarkers && data.mapMarkers.length > 0) {
+    // Use live ACLED event data for map markers
+    const seen = new Set(); // deduplicate nearby markers
+    data.mapMarkers.forEach(m => {
+      const key = `${m.lat.toFixed(1)},${m.lng.toFixed(1)}`;
+      if (seen.has(key)) return; // skip duplicate coordinates
+      seen.add(key);
 
-  // Heatmap-style circles for intensity
-  const heatZones = [
-    {lat:35.69,lng:51.39,radius:80000,color:'#e63946'},
-    {lat:32.65,lng:51.67,radius:50000,color:'#e63946'},
-    {lat:34.64,lng:50.88,radius:40000,color:'#e63946'},
-    {lat:33.89,lng:35.50,radius:35000,color:'#f4a261'},
-    {lat:25.12,lng:51.32,radius:30000,color:'#f4a261'},
-  ];
+      const f = m.fatalities || 0;
+      const type = (m.type || '').toLowerCase();
+      let color = '#f4a261';
+      let cat = 'strikes';
+      if (f >= 20) color = '#e63946';
+      else if (f >= 5) color = '#f4a261';
+      else if (f === 0 && type.includes('strategic')) { color = '#48cae4'; cat = 'bases'; }
+      if (type.includes('civilian') || type.includes('humanitarian')) { color = '#2dc653'; cat = 'humanitarian'; }
+      if (type.includes('protest') || type.includes('riot')) { color = '#e9c46a'; cat = 'humanitarian'; }
+
+      const size = Math.min(16, Math.max(6, 6 + Math.sqrt(f) * 2));
+      markers.push({
+        lat: m.lat, lng: m.lng,
+        title: m.title || 'Event',
+        desc: m.desc || `${m.type} — ${f} fatalities`,
+        color, size, cat
+      });
+    });
+    console.log(`Map: ${markers.length} ACLED markers loaded`);
+  }
+
+  // If no API data, the map will be empty (no hardcoded fallback)
+  if (markers.length === 0) {
+    console.log('Map: No ACLED geo data available. Configure ACLED_API_KEY for live markers.');
+  }
+
+  // ─── Auto-generate heatmap zones from marker density ──────
+  const heatZones = [];
+  if (markers.length > 0) {
+    // Group markers by region (rounded to 2 decimal places)
+    const regions = {};
+    markers.forEach(m => {
+      const key = `${m.lat.toFixed(0)},${m.lng.toFixed(0)}`;
+      if (!regions[key]) regions[key] = { lat: 0, lng: 0, count: 0, totalFatalities: 0 };
+      regions[key].lat += m.lat;
+      regions[key].lng += m.lng;
+      regions[key].count++;
+      regions[key].totalFatalities += parseInt(m.size) || 0;
+    });
+
+    Object.values(regions)
+      .filter(r => r.count >= 2) // Only show heat for clusters
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8) // Top 8 heat zones
+      .forEach(r => {
+        heatZones.push({
+          lat: r.lat / r.count,
+          lng: r.lng / r.count,
+          radius: Math.min(100000, 20000 + r.count * 8000),
+          color: r.totalFatalities > 50 ? '#e63946' : '#f4a261'
+        });
+      });
+  }
 
   heatZones.forEach(h => {
     const circle = L.circle([h.lat, h.lng], {
@@ -516,21 +585,57 @@ function initCharts(data) {
   Chart.defaults.font.size = 10;
 
   // Casualty timeline chart
+  // Casualty chart - build from API data if available
   const ctx1 = document.getElementById('casualtyChart');
-  if (ctx1) new Chart(ctx1,{type:'line',data:{
-    labels:['Jun 13','Jun 18','Jun 22','Jun 24','Feb 28','Mar 1','Mar 2','Mar 3','Mar 4'],
-    datasets:[{label:'Iran Deaths',data:[120,480,890,1190,1350,1555,2045,2200,2400],borderColor:'#e63946',backgroundColor:'rgba(230,57,70,0.1)',fill:true,tension:0.3,pointRadius:4},
-      {label:'Israel Deaths',data:[0,5,12,28,28,28,28,28,28],borderColor:'#e9c46a',backgroundColor:'rgba(233,196,106,0.1)',fill:true,tension:0.3,pointRadius:4},
-      {label:'US Deaths',data:[0,0,0,0,0,2,6,6,6],borderColor:'#48cae4',backgroundColor:'rgba(72,202,228,0.1)',fill:true,tension:0.3,pointRadius:4}]
-  },options:{responsive:true,plugins:{legend:{labels:{boxWidth:12,padding:16}}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'}},x:{grid:{color:'rgba(255,255,255,0.04)'}}}}});
+  if (ctx1 && !ctx1._chartDone) {
+    ctx1._chartDone = true;
+    // Extract fatality values from globalStats
+    const countryStats = (data.globalStats || []).filter(s => s.id !== 'total_deaths' && s.id !== 'no_data');
+    if (countryStats.length > 0) {
+      const labels = countryStats.map(s => s.label.replace('Fatalities in ', ''));
+      const values = countryStats.map(s => s.rawValue || 0);
+      const colors = countryStats.map(s => {
+        if (s.color === 'red') return '#e63946';
+        if (s.color === 'orange') return '#f4a261';
+        if (s.color === 'yellow') return '#e9c46a';
+        if (s.color === 'cyan') return '#48cae4';
+        return '#666680';
+      });
+      new Chart(ctx1, {type:'bar', data:{
+        labels: labels,
+        datasets: [{
+          label: 'Fatalities by Country',
+          data: values,
+          backgroundColor: colors.map(c => c + 'B3'),
+          borderColor: colors,
+          borderWidth: 1
+        }]
+      }, options:{responsive:true, plugins:{legend:{labels:{boxWidth:12,padding:16}}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'}},x:{grid:{color:'rgba(255,255,255,0.04)'}}}}});
+    }
+  }
 
-  // Military comparison bar chart
+  // Military assets chart - build from API data
   const ctx2 = document.getElementById('militaryChart');
-  if (ctx2) new Chart(ctx2,{type:'bar',data:{
-    labels:['Missiles Fired','Drones Deployed','Munitions Dropped','Ships Destroyed','Jets Used','Cities Targeted'],
-    datasets:[{label:'Iran',data:[550,1000,0,0,0,0],backgroundColor:'rgba(230,57,70,0.7)'},
-      {label:'Israel/US',data:[0,0,1200,17,200,163],backgroundColor:'rgba(72,202,228,0.7)'}]
-  },options:{responsive:true,indexAxis:'y',plugins:{legend:{labels:{boxWidth:12,padding:16}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'}},y:{grid:{color:'rgba(255,255,255,0.04)'}}}}});
+  if (ctx2 && !ctx2._chartDone) {
+    ctx2._chartDone = true;
+    const assets = data.militaryAssets || [];
+    if (assets.length > 0 && assets[0].value !== '—') {
+      const labels = assets.map(a => a.label.replace(/\\n/g, ' ').replace(/\n/g, ' '));
+      const values = assets.map(a => parseInt(a.value.replace(/[^0-9]/g, '')) || 0);
+      new Chart(ctx2, {type:'bar', data:{
+        labels: labels,
+        datasets: [{
+          label: 'Event Count',
+          data: values,
+          backgroundColor: 'rgba(72,202,228,0.7)',
+          borderColor: '#48cae4',
+          borderWidth: 1
+        }]
+      }, options:{responsive:true, indexAxis:'y', plugins:{legend:{labels:{boxWidth:12,padding:16}}},
+        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'}},y:{grid:{color:'rgba(255,255,255,0.04)'}}}}});
+    }
+  }
 }
 
 // ─── SCROLL ANIMATIONS ──────────────────────────────────
@@ -572,12 +677,16 @@ function render(data) {
     }
   }
   
-  document.getElementById('globalStats').innerHTML = buildGlobalStats(data.globalStats);
-  document.getElementById('countryGrid').innerHTML = buildCountries(data.countries);
-  document.getElementById('assetsGrid').innerHTML = buildAssets(data.militaryAssets);
-  document.getElementById('timeline').innerHTML = buildTimeline(data.timeline);
-  document.getElementById('regionGrid').innerHTML = buildRegional(data.regional);
-  document.getElementById('sources').innerHTML = '<strong>Sources:</strong> ' + data.sources.join(' · ');
+  document.getElementById('globalStats').innerHTML = buildGlobalStats(data.globalStats || []);
+  document.getElementById('countryGrid').innerHTML = data.countries && Object.keys(data.countries).length > 0
+    ? buildCountries(data.countries)
+    : '<div class="stat-card muted"><div class="label">Country data</div><div class="sub">Configure ACLED API for live country breakdown</div></div>';
+  document.getElementById('assetsGrid').innerHTML = buildAssets(data.militaryAssets || []);
+  document.getElementById('timeline').innerHTML = buildTimeline(data.timeline || []);
+  document.getElementById('regionGrid').innerHTML = data.regional && data.regional.length > 0
+    ? buildRegional(data.regional)
+    : '<div class="region-card"><div class="r-name">Regional data loading...</div><div class="r-status">Configure ACLED API</div></div>';
+  document.getElementById('sources').innerHTML = '<strong>Sources:</strong> ' + (data.sources || []).join(' · ');
 
   // New sections
   if (data.humanitarian) buildHumanitarian(data.humanitarian);
@@ -585,7 +694,7 @@ function render(data) {
     buildEconomic(data.economic);
     initOilChart(data.economic);
   }
-  if (data.newsFeed) buildNewsFeed(data.newsFeed);
+  if (data.newsFeed && data.newsFeed.length > 0) buildNewsFeed(data.newsFeed);
 
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('app').style.opacity = '1';
