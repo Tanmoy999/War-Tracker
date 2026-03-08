@@ -315,6 +315,75 @@ function buildEconomic(economic) {
   }
 }
 
+// ─── NEW SECTIONS (Cyber, Misinfo, Refugee, OSINT, Glossary) ──
+function buildCyberWarfare(cyber) {
+  const el = document.getElementById('cyberGrid');
+  if (el && cyber) {
+    el.innerHTML = cyber.map((c, i) => `
+      <div class="cyber-card ${c.type}" style="animation-delay:${i * 0.05}s">
+        <div class="cyber-title">${c.icon} ${c.title}</div>
+        <div class="cyber-metric" data-target="${c.value}">${c.value}</div>
+        <div class="cyber-desc">${c.desc}</div>
+      </div>`).join('');
+  }
+}
+
+function buildMisinfoHub(misinfo) {
+  const el = document.getElementById('misinfoGrid');
+  if (el && misinfo) {
+    el.innerHTML = misinfo.map((m, i) => `
+      <div class="misinfo-item" style="animation-delay:${i * 0.05}s">
+        <div class="misinfo-badge ${m.status.toLowerCase()}">${m.status}</div>
+        <div class="misinfo-content">
+          <div class="misinfo-claim">"${m.claim}"</div>
+          <div class="misinfo-fact">${m.fact}</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function buildRefugeeStats(refugees) {
+  const el = document.getElementById('refugeeGrid');
+  if (el && refugees) {
+    el.innerHTML = refugees.map((r, i) => `
+      <div class="refugee-card" style="animation-delay:${i * 0.05}s">
+        <span class="r-icon">${r.icon}</span>
+        <div class="r-stat" data-target="${r.value}">${r.value}</div>
+        <div class="r-label">${r.label}</div>
+      </div>`).join('');
+  }
+}
+
+function buildOsintGrid(osint) {
+  const el = document.getElementById('osintGrid');
+  if (el && osint) {
+    el.innerHTML = osint.map((o, i) => `
+      <div class="osint-item" style="animation-delay:${i * 0.05}s" onclick="window.open('${o.sourceUrl}', '_blank')">
+        <div class="osint-bg" style="background-image:url('${o.image}')"></div>
+        <div class="osint-blur">
+          <div class="osint-icon">⚠️</div>
+          <div class="osint-warning">Verified OSINT<br/>Click to view source</div>
+        </div>
+        <div class="osint-meta">${o.date} — ${o.location}</div>
+      </div>`).join('');
+  }
+}
+
+function buildGlossary(glossary) {
+  const el = document.getElementById('glossaryGrid');
+  if (el && glossary) {
+    el.innerHTML = glossary.map((g, i) => `
+      <div class="glossary-card" style="animation-delay:${i * 0.05}s">
+        <div class="glossary-header">
+          <div class="glossary-title">${g.name}</div>
+          <div class="glossary-type">${g.type}</div>
+        </div>
+        <div class="glossary-desc">${g.desc}</div>
+      </div>`).join('');
+  }
+}
+
+
 function initOilChart(economic) {
   if (typeof Chart === 'undefined' || !economic.oilPriceHistory) return;
   const ctx = document.getElementById('oilChart');
@@ -713,6 +782,12 @@ function render(data) {
     initOilChart(data.economic);
   }
   if (data.newsFeed && data.newsFeed.length > 0) buildNewsFeed(data.newsFeed);
+  
+  if (data.cyberWarfare) buildCyberWarfare(data.cyberWarfare);
+  if (data.misinformation) buildMisinfoHub(data.misinformation);
+  if (data.refugees) buildRefugeeStats(data.refugees);
+  if (data.osintMedia) buildOsintGrid(data.osintMedia);
+  if (data.glossary) buildGlossary(data.glossary);
 
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('app').style.opacity = '1';

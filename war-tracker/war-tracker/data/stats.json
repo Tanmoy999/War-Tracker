@@ -83,5 +83,58 @@
     "MSF",
     "UNICEF",
     "Reuters / AP / AFP"
+  ],
+  "cyberWarfare": [
+    {
+      "icon": "⚠️",
+      "title": "API Required",
+      "value": "—",
+      "desc": "Connecting to cybersecurity feeds to track active events.",
+      "type": "attack"
+    }
+  ],
+  "misinformation": [
+    {
+      "status": "Unconfirmed",
+      "claim": "Awaiting fact-checking API data.",
+      "fact": "Connect API keys in Netlify to pull verified fact-checks."
+    }
+  ],
+  "refugees": [
+    {
+      "icon": "🚶",
+      "value": "—",
+      "label": "Awaiting UNHCR data"
+    }
+  ],
+  "osintMedia": [
+    {
+      "image": "",
+      "date": "API Required",
+      "location": "Awaiting social media OSINT feed",
+      "sourceUrl": "#"
+    }
+  ],
+  "glossary": [
+    {
+      "name": "Shahed-136",
+      "type": "Loitering Munition",
+      "desc": "An Iranian autonomous 'kamikaze' drone with a range of approx 2,500km and a 40kg explosive payload."
+    },
+    {
+      "name": "Iron Dome",
+      "type": "Air Defense System",
+      "desc": "Israeli mobile all-weather air defense system designed to intercept and destroy short-range rockets and artillery shells."
+    },
+    {
+      "name": "F-35A Lightning II",
+      "type": "Stealth Multi-role Fighter",
+      "desc": "Fifth-generation stealth combat aircraft operated by both the US and Israel (as the F-35I Adir)."
+    },
+    {
+      "name": "Patriot PAC-3",
+      "type": "Surface-to-Air Missile",
+      "desc": "An advanced US-made long-range air defense system utilized for intercepting tactical ballistic missiles."
+    }
   ]
 }
