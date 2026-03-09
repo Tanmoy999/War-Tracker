@@ -783,7 +783,6 @@ function render(data) {
   }
   if (data.newsFeed && data.newsFeed.length > 0) buildNewsFeed(data.newsFeed);
   
-  if (data.refugees) buildRefugeeStats(data.refugees);
   if (data.glossary) buildGlossary(data.glossary);
 
   document.getElementById('loading').classList.add('hidden');
