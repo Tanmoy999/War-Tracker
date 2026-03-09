@@ -257,20 +257,26 @@ function switchWeaponCategory(category, btn) {
 
 function buildWeaponComparison(weaponData) {
   const grid = document.getElementById('weaponComparisonGrid');
+  console.log('buildWeaponComparison called', { gridFound: !!grid, hasWeaponData: !!weaponData, currentCategory: currentWeaponCategory });
+  
   if (!grid) {
     console.warn('weaponComparisonGrid element not found');
     return;
   }
   if (!weaponData) {
     console.warn('Weapon data is null or undefined');
+    grid.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);">⚠️ Weapon data not loaded</div>';
     return;
   }
   if (!weaponData[currentWeaponCategory]) {
-    console.warn(`No data for category: ${currentWeaponCategory}`);
+    console.warn(`No data for category: ${currentWeaponCategory}`, { availableCategories: Object.keys(weaponData) });
+    grid.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);">⚠️ No data for ${currentWeaponCategory}</div>`;
     return;
   }
   
   const weapons = weaponData[currentWeaponCategory];
+  console.log(`Rendering ${weapons.length} weapons for ${currentWeaponCategory}`);
+  
   if (!weapons || weapons.length === 0) {
     grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);">No weapon data available for this category</div>';
     return;
@@ -283,36 +289,39 @@ function buildWeaponComparison(weaponData) {
     const quantityPercent = maxQuantity > 0 ? (w.quantity / maxQuantity * 100).toFixed(0) : 0;
     const rangePercent = maxRange > 0 ? (w.range / maxRange * 100).toFixed(0) : 0;
     const countryColor = w.country === 'Iran' ? '#ff7b00' : w.country === 'Israel' ? '#00d4ff' : '#4a90e2';
-    const mentionsBadge = w.mentions > 0 ? `<span style="background:${countryColor};color:#000;padding:2px 6px;border-radius:3px;font-size:0.65rem;font-weight:600;margin-left:auto;">${w.mentions} news mentions</span>` : '';
+    const mentionsBadge = w.mentions > 0 ? `<div style="background:${countryColor};color:#000;padding:4px 8px;border-radius:3px;font-size:0.65rem;font-weight:600;margin-top:6px;display:inline-block;">📰 ${w.mentions} mentions</div>` : '';
     
     return `
       <div class="weapon-card" style="animation-delay:${i * 0.08}s;border-left:4px solid ${countryColor}">
-        <div class="weapon-header">
-          <span class="weapon-flag">${w.icon}</span>
+        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;">
+          <span style="font-size:1.8rem;">${w.icon}</span>
           <div>
-            <div class="weapon-name">${w.name}</div>
-            <div class="weapon-country">${w.country}</div>
+            <div style="color:#fff;font-weight:600;font-family:IBM Plex Sans,sans-serif;line-height:1.2;">${w.name}</div>
+            <div style="color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-top:2px;">${w.country}</div>
           </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Available Units</div>
+          <div style="width:100%;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-bottom:4px;">
+            <div style="width:${quantityPercent}%;height:100%;background:${countryColor};transition:width 0.6s ease;"></div>
+          </div>
+          <div style="font-family:IBM Plex Mono,monospace;font-size:0.7rem;color:var(--muted);">${w.quantity} units</div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Operational Range</div>
+          <div style="width:100%;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-bottom:4px;">
+            <div style="width:${rangePercent}%;height:100%;background:${countryColor};transition:width 0.6s ease;"></div>
+          </div>
+          <div style="font-family:IBM Plex Mono,monospace;font-size:0.7rem;color:var(--muted);">${w.range} km</div>
+        </div>
+        <div style="font-size:0.8rem;color:var(--muted);line-height:1.4;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          ${w.desc}
           ${mentionsBadge}
         </div>
-        <div class="weapon-metric">
-          <div class="metric-label">Available Units</div>
-          <div class="metric-bar">
-            <div class="metric-fill" style="width:${quantityPercent}%;background:${countryColor};"></div>
-          </div>
-          <div class="metric-value">${w.quantity} units</div>
-        </div>
-        <div class="weapon-metric">
-          <div class="metric-label">Operational Range</div>
-          <div class="metric-bar">
-            <div class="metric-fill" style="width:${rangePercent}%;background:${countryColor};"></div>
-          </div>
-          <div class="metric-value">${w.range} km</div>
-        </div>
-        <div class="weapon-desc">${w.desc}</div>
       </div>
     `;
   }).join('');
+  
   
   // Log success
   console.log(`Rendered ${weapons.length} weapons for category: ${currentWeaponCategory}`);
