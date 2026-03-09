@@ -103,8 +103,8 @@ header{padding:40px 40px 28px;display:flex;justify-content:space-between;align-i
 .weapon-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-top:16px;}
 .weapon-card{background:var(--panel);border:1px solid var(--border);padding:16px;border-radius:4px;animation:fadeUp 0.5s ease both;transition:transform 0.2s;}
 .weapon-card:hover{transform:translateY(-2px);border-color:var(--cyan);}
-.weapon-header{display:flex;gap:12px;align-items:center;margin-bottom:14px;}
-.weapon-flag{font-size:1.8rem;}
+.weapon-header{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;}
+.weapon-flag{font-size:1.8rem;flex-shrink:0;}
 .weapon-name{color:#fff;font-weight:600;font-family:'IBM Plex Sans',sans-serif;line-height:1.2;}
 .weapon-country{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-top:2px;}
 .weapon-metric{margin-bottom:12px;}

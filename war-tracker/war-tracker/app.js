@@ -203,10 +203,52 @@ function buildAssets(assets) {
     </div>`).join('');
 }
 
+// ─── ENRICH WEAPON DATA WITH NEWS MENTIONS ──────────────
+function enrichWeaponDataFromNews(weaponData, newsFeed) {
+  if (!weaponData || !newsFeed) return weaponData;
+  
+  // Weapon keywords to search in news
+  const weaponMentions = {
+    'Shahed-136': 0, 'Kheibar Shekan': 0, 'F-14': 0, 'S-300': 0,
+    'MQ-9 Reaper': 0, 'F-16': 0, 'JASSM': 0, 'Patriot': 0, 'Iron Dome': 0, 'David\'s Sling': 0, 'F-35': 0, 'Hermes': 0
+  };
+  
+  // Count weapon mentions in news
+  if (Array.isArray(newsFeed)) {
+    newsFeed.forEach(article => {
+      const text = (article.title + ' ' + (article.description || '')).toLowerCase();
+      Object.keys(weaponMentions).forEach(weapon => {
+        if (text.includes(weapon.toLowerCase())) {
+          weaponMentions[weapon]++;
+        }
+      });
+    });
+  }
+  
+  // Update weapon data with real mention counts (as engagement metric)
+  const enrichedData = JSON.parse(JSON.stringify(weaponData)); // Deep clone
+  
+  ['drones', 'missiles', 'aircraft', 'airDefense'].forEach(category => {
+    if (enrichedData[category]) {
+      enrichedData[category].forEach(weapon => {
+        weapon.mentions = weaponMentions[weapon.name] || 0;
+        // Store original quantity before displaying engagement
+        weapon.quantity = weapon.quantity || 1;
+      });
+    }
+  });
+  
+  return enrichedData;
+}
+
+
 // ─── WEAPON COMPARISON ───────────────────────────────────
 let currentWeaponCategory = 'drones';
 function switchWeaponCategory(category, btn) {
-  if (!appData?.weaponComparison) return;
+  if (!appData?.weaponComparison) {
+    console.warn('Weapon data not available');
+    return;
+  }
   currentWeaponCategory = category;
   document.querySelectorAll('.weapon-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
@@ -215,16 +257,33 @@ function switchWeaponCategory(category, btn) {
 
 function buildWeaponComparison(weaponData) {
   const grid = document.getElementById('weaponComparisonGrid');
-  if (!grid || !weaponData || !weaponData[currentWeaponCategory]) return;
+  if (!grid) {
+    console.warn('weaponComparisonGrid element not found');
+    return;
+  }
+  if (!weaponData) {
+    console.warn('Weapon data is null or undefined');
+    return;
+  }
+  if (!weaponData[currentWeaponCategory]) {
+    console.warn(`No data for category: ${currentWeaponCategory}`);
+    return;
+  }
   
   const weapons = weaponData[currentWeaponCategory];
-  const maxQuantity = Math.max(...weapons.map(w => w.quantity));
-  const maxRange = Math.max(...weapons.map(w => w.range));
+  if (!weapons || weapons.length === 0) {
+    grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);">No weapon data available for this category</div>';
+    return;
+  }
+  
+  const maxQuantity = Math.max(...weapons.map(w => w.quantity || 0));
+  const maxRange = Math.max(...weapons.map(w => w.range || 0));
   
   grid.innerHTML = weapons.map((w, i) => {
-    const quantityPercent = (w.quantity / maxQuantity * 100).toFixed(0);
-    const rangePercent = (w.range / maxRange * 100).toFixed(0);
+    const quantityPercent = maxQuantity > 0 ? (w.quantity / maxQuantity * 100).toFixed(0) : 0;
+    const rangePercent = maxRange > 0 ? (w.range / maxRange * 100).toFixed(0) : 0;
     const countryColor = w.country === 'Iran' ? '#ff7b00' : w.country === 'Israel' ? '#00d4ff' : '#4a90e2';
+    const mentionsBadge = w.mentions > 0 ? `<span style="background:${countryColor};color:#000;padding:2px 6px;border-radius:3px;font-size:0.65rem;font-weight:600;margin-left:auto;">${w.mentions} news mentions</span>` : '';
     
     return `
       <div class="weapon-card" style="animation-delay:${i * 0.08}s;border-left:4px solid ${countryColor}">
@@ -234,6 +293,7 @@ function buildWeaponComparison(weaponData) {
             <div class="weapon-name">${w.name}</div>
             <div class="weapon-country">${w.country}</div>
           </div>
+          ${mentionsBadge}
         </div>
         <div class="weapon-metric">
           <div class="metric-label">Available Units</div>
@@ -253,6 +313,9 @@ function buildWeaponComparison(weaponData) {
       </div>
     `;
   }).join('');
+  
+  // Log success
+  console.log(`Rendered ${weapons.length} weapons for category: ${currentWeaponCategory}`);
 }
 
 function buildTimeline(events) {
@@ -799,7 +862,14 @@ function render(data) {
   }
   
   document.getElementById('globalStats').innerHTML = buildGlobalStats(data.globalStats || []);
-  if (data.weaponComparison) buildWeaponComparison(data.weaponComparison);
+  
+  // Enrich weapon data with real news mentions
+  if (data.weaponComparison) {
+    const enrichedWeapons = enrichWeaponDataFromNews(data.weaponComparison, data.newsFeed);
+    appData.weaponComparison = enrichedWeapons; // Update appData with enriched version
+    buildWeaponComparison(enrichedWeapons);
+  }
+  
   document.getElementById('countryGrid').innerHTML = data.countries && Object.keys(data.countries).length > 0
     ? buildCountries(data.countries)
     : '<div class="stat-card muted"><div class="label">Country data</div><div class="sub">Configure ACLED API for live country breakdown</div></div>';
