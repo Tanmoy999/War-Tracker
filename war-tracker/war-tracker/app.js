@@ -246,13 +246,72 @@ function enrichWeaponDataFromNews(weaponData, newsFeed) {
 let currentWeaponCategory = 'drones';
 function switchWeaponCategory(category, btn) {
   if (!appData?.weaponComparison) {
-    console.warn('Weapon data not available');
+    console.warn('Weapon data not available in appData');
     return;
   }
   currentWeaponCategory = category;
   document.querySelectorAll('.weapon-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
+  btn.classList.add('active');  
   buildWeaponComparison(appData.weaponComparison);
+}
+
+function buildWeaponComparison(weaponData) {
+  const grid = document.getElementById('weaponComparisonGrid');
+  console.log('=== buildWeaponComparison START ===');
+  console.log('Grid element found:', !!grid);
+  console.log('Weapon data provided:', !!weaponData);
+  console.log('Current category:', currentWeaponCategory);
+  
+  if (!grid) {
+    console.error('❌ Grid element NOT found!');
+    return;
+  }
+  
+  if (!weaponData) {
+    console.error('❌ weaponData is null/undefined');
+    return;
+  }
+  
+  const weapons = weaponData[currentWeaponCategory];
+  console.log('Weapons array:', weapons);
+  
+  if (!weapons) {
+    console.error('❌ No weapons for category:', currentWeaponCategory);
+    grid.innerHTML = '<div style="padding:20px;color:#ff6b6b;">Error: No weapons for ' + currentWeaponCategory + '</div>';
+    return;
+  }
+  
+  if (weapons.length === 0) {
+    console.warn('Weapons array is empty');
+    grid.innerHTML = '<div style="padding:20px;color:#ffa500;">No weapons available</div>';
+    return;
+  }
+  
+  console.log('✓ Found', weapons.length, 'weapons');
+  
+  const maxQuantity = Math.max(...weapons.map(w => w.quantity || 1));
+  const maxRange = Math.max(...weapons.map(w => w.range || 1));
+  
+  let html = '';
+  for (let i = 0; i < weapons.length; i++) {
+    const w = weapons[i];
+    const quantityPercent = (w.quantity / maxQuantity * 100).toFixed(0);
+    const rangePercent = (w.range / maxRange * 100).toFixed(0);
+    const color = w.country === 'Iran' ? '#ff7b00' : w.country === 'Israel' ? '#00d4ff' : '#4a90e2';
+    
+    html += '<div class="weapon-card" style="border-left:4px solid ' + color + '"><div style="display:flex;gap:12px;margin-bottom:14px;"><span style="font-size:1.8rem;">' + w.icon + '</span><div><div style="color:#fff;font-weight:600;">' + w.name + '</div><div style="color:var(--muted);font-size:0.7rem;text-transform:uppercase;margin-top:2px;">' + w.country + '</div></div></div>';
+    html += '<div style="margin-bottom:12px;"><div style="color:var(--muted);font-size:0.7rem;text-transform:uppercase;margin-bottom:6px;">Available Units</div>';
+    html += '<div style="width:100%;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-bottom:4px;"><div style="width:' + quantityPercent + '%;height:100%;background:' + color + ';"></div></div>';
+    html += '<div style="font-size:0.7rem;color:var(--muted);">' + w.quantity + ' units</div></div>';
+    html += '<div style="margin-bottom:12px;"><div style="color:var(--muted);font-size:0.7rem;text-transform:uppercase;margin-bottom:6px;">Operational Range</div>';
+    html += '<div style="width:100%;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-bottom:4px;"><div style="width:' + rangePercent + '%;height:100%;background:' + color + ';"></div></div>';
+    html += '<div style="font-size:0.7rem;color:var(--muted);">' + w.range + ' km</div></div>';
+    html += '<div style="font-size:0.8rem;color:var(--muted);border-top:1px solid rgba(255,255,255,0.05);padding-top:10px;margin-top:10px;">' + w.desc + '</div></div>';
+  }
+  
+  grid.innerHTML = html;
+  console.log('✓ Rendered' + weapons.length + 'weapons in grid');
+  console.log('=== buildWeaponComparison END ===');
 }
 
 function buildWeaponComparison(weaponData) {

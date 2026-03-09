@@ -359,16 +359,45 @@
 <script src="lib/chart/chart.umd.min.js"></script>
 <script src="app.js"></script>
 <script>
-// Test initialization - ensure weapons display with fallback data
+// Direct test: Load and render weapon data immediately
+window.testWeaponRender = function() {
+  console.log('Testing weapon render...');
+  fetch('./data/stats.json?t=' + Date.now())
+    .then(r => r.json())
+    .then(data => {
+      console.log('Data loaded:', {
+        hasWeaponComparison: !!data.weaponComparison,
+        categories: data.weaponComparison ? Object.keys(data.weaponComparison) : []
+      });
+      
+      if (data.weaponComparison && data.weaponComparison.drones) {
+        console.log('Drones found:', data.weaponComparison.drones.length);
+        currentWeaponCategory = 'drones';
+        buildWeaponComparison(data.weaponComparison);
+        console.log('Weapon comparison rendered');
+      }
+    })
+    .catch(e => console.error('Failed to test weapons:', e));
+};
+
+// Run test after a short delay
+setTimeout(testWeaponRender, 500);
+
+// Also test in DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(function() {
     const grid = document.getElementById('weaponComparisonGrid');
+    console.log('Grid status:', {
+      found: !!grid,
+      hasContent: grid ? grid.innerHTML.length > 0 : 'N/A',
+      isVisible: grid ? grid.offsetParent !== null : 'N/A'
+    });
+    
     if (grid && grid.textContent.trim() === '') {
-      console.log('Test: Weapon grid is empty, populating with fallback data');
-      // This is a test to see if the grid is actually rendering
-      grid.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:4px;"><span style="color:var(--orange);">⚠️</span> Checking weapon data... (if this persists, check browser console for errors)</div>';
+      console.log('Grid is empty - running test render');
+      testWeaponRender();
     }
-  }, 2000);
+  }, 1500);
 });
 </script>
 
