@@ -783,10 +783,7 @@ function render(data) {
   }
   if (data.newsFeed && data.newsFeed.length > 0) buildNewsFeed(data.newsFeed);
   
-  if (data.cyberWarfare) buildCyberWarfare(data.cyberWarfare);
-  if (data.misinformation) buildMisinfoHub(data.misinformation);
   if (data.refugees) buildRefugeeStats(data.refugees);
-  if (data.osintMedia) buildOsintGrid(data.osintMedia);
   if (data.glossary) buildGlossary(data.glossary);
 
   document.getElementById('loading').classList.add('hidden');
