@@ -29,24 +29,24 @@
   ],
   "weaponComparison": {
     "drones": [
-      { "name": "Shahed-136", "country": "Iran", "icon": "🇮🇷", "quantity": 450, "range": 2500, "desc": "Loitering munition, 40kg payload" },
-      { "name": "Hermes 450", "country": "Israel", "icon": "🇮🇱", "quantity": 180, "range": 150, "desc": "Four-bladed tactical drone" },
-      { "name": "MQ-9 Reaper", "country": "USA", "icon": "🇺🇸", "quantity": 200, "range": 1850, "desc": "Hunter-killer UCAV, 1,700kg payload" }
+      { "name": "Shahed-136", "country": "Iran", "icon": "🇮🇷", "visual": "🛸", "quantity": 450, "range": 2500, "desc": "Loitering munition, 40kg payload" },
+      { "name": "Hermes 450", "country": "Israel", "icon": "🇮🇱", "visual": "🚁", "quantity": 180, "range": 150, "desc": "Four-bladed tactical drone" },
+      { "name": "MQ-9 Reaper", "country": "USA", "icon": "🇺🇸", "visual": "🛸", "quantity": 200, "range": 1850, "desc": "Hunter-killer UCAV, 1,700kg payload" }
     ],
     "missiles": [
-      { "name": "Kheibar Shekan", "country": "Iran", "icon": "🇮🇷", "quantity": 120, "range": 2000, "desc": "Hypersonic ballistic missile" },
-      { "name": "David's Sling", "country": "Israel", "icon": "🇮🇱", "quantity": 350, "range": 200, "desc": "Air defense system" },
-      { "name": "JASSM", "country": "USA", "icon": "🇺🇸", "quantity": 500, "range": 575, "desc": "Stealth cruise missile" }
+      { "name": "Kheibar Shekan", "country": "Iran", "icon": "🇮🇷", "visual": "🚀", "quantity": 120, "range": 2000, "desc": "Hypersonic ballistic missile" },
+      { "name": "David's Sling", "country": "Israel", "icon": "🇮🇱", "visual": "🌟", "quantity": 350, "range": 200, "desc": "Air defense system" },
+      { "name": "JASSM", "country": "USA", "icon": "🇺🇸", "visual": "🚀", "quantity": 500, "range": 575, "desc": "Stealth cruise missile" }
     ],
     "aircraft": [
-      { "name": "F-14 Tomcat", "country": "Iran", "icon": "🇮🇷", "quantity": 35, "range": 2000, "desc": "Air superiority fighter" },
-      { "name": "F-35I Adir", "country": "Israel", "icon": "🇮🇱", "quantity": 33, "range": 1450, "desc": "5th-gen stealth fighter" },
-      { "name": "F-16 Fighting Falcon", "country": "USA", "icon": "🇺🇸", "quantity": 2300, "range": 2000, "desc": "Multirole combat aircraft" }
+      { "name": "F-14 Tomcat", "country": "Iran", "icon": "🇮🇷", "visual": "✈️", "quantity": 35, "range": 2000, "desc": "Air superiority fighter" },
+      { "name": "F-35I Adir", "country": "Israel", "icon": "🇮🇱", "visual": "🛩️", "quantity": 33, "range": 1450, "desc": "5th-gen stealth fighter" },
+      { "name": "F-16 Fighting Falcon", "country": "USA", "icon": "🇺🇸", "visual": "✈️", "quantity": 2300, "range": 2000, "desc": "Multirole combat aircraft" }
     ],
     "airDefense": [
-      { "name": "S-300 System", "country": "Iran", "icon": "🇮🇷", "quantity": 25, "range": 200, "desc": "Long-range SAM" },
-      { "name": "Iron Dome", "country": "Israel", "icon": "🇮🇱", "quantity": 15, "range": 70, "desc": "Mobile AD system" },
-      { "name": "Patriot PAC-3", "country": "USA", "icon": "🇺🇸", "quantity": 40, "range": 100, "desc": "Advanced SAM system" }
+      { "name": "S-300 System", "country": "Iran", "icon": "🇮🇷", "visual": "🛡️", "quantity": 25, "range": 200, "desc": "Long-range SAM" },
+      { "name": "Iron Dome", "country": "Israel", "icon": "🇮🇱", "visual": "🎆", "quantity": 15, "range": 70, "desc": "Mobile AD system" },
+      { "name": "Patriot PAC-3", "country": "USA", "icon": "🇺🇸", "visual": "🛡️", "quantity": 40, "range": 100, "desc": "Advanced SAM system" }
     ]
   },
   "timeline": [

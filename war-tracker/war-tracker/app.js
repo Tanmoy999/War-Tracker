@@ -244,50 +244,54 @@ function enrichWeaponDataFromNews(weaponData, newsFeed) {
 
 // ─── WEAPON COMPARISON ───────────────────────────────────
 let currentWeaponCategory = 'drones';
+let storedWeaponData = null;
+
 function switchWeaponCategory(category, btn) {
-  if (!appData?.weaponComparison) {
-    console.warn('Weapon data not available in appData');
+  console.log('switchWeaponCategory called:', category);
+  
+  if (appData?.weaponComparison) {
+    storedWeaponData = appData.weaponComparison;
+  }
+  
+  if (!storedWeaponData) {
+    console.error('No weapon data available!');
     return;
   }
+  
   currentWeaponCategory = category;
+  
+  // Update UI
   document.querySelectorAll('.weapon-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');  
-  buildWeaponComparison(appData.weaponComparison);
+  if (btn) btn.classList.add('active');
+  
+  // Render new category
+  buildWeaponComparison(storedWeaponData);
 }
 
 function buildWeaponComparison(weaponData) {
   const grid = document.getElementById('weaponComparisonGrid');
-  console.log('=== buildWeaponComparison START ===');
-  console.log('Grid element found:', !!grid);
-  console.log('Weapon data provided:', !!weaponData);
-  console.log('Current category:', currentWeaponCategory);
+  console.log('=== buildWeaponComparison ===');
+  console.log('Grid element:', !!grid);
+  console.log('Category:', currentWeaponCategory);
+  console.log('Data:', !!weaponData);
   
   if (!grid) {
-    console.error('❌ Grid element NOT found!');
+    console.error('Grid element not found');
     return;
   }
   
-  if (!weaponData) {
-    console.error('❌ weaponData is null/undefined');
+  if (!weaponData || !weaponData[currentWeaponCategory]) {
+    console.error('No weapon data for:', currentWeaponCategory);
+    grid.innerHTML = '<div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--muted);">⚠️ No data for ' + currentWeaponCategory + '</div>';
     return;
   }
   
   const weapons = weaponData[currentWeaponCategory];
-  console.log('Weapons array:', weapons);
   
-  if (!weapons) {
-    console.error('❌ No weapons for category:', currentWeaponCategory);
-    grid.innerHTML = '<div style="padding:20px;color:#ff6b6b;">Error: No weapons for ' + currentWeaponCategory + '</div>';
+  if (!weapons || weapons.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--muted);">No weapons available</div>';
     return;
   }
-  
-  if (weapons.length === 0) {
-    console.warn('Weapons array is empty');
-    grid.innerHTML = '<div style="padding:20px;color:#ffa500;">No weapons available</div>';
-    return;
-  }
-  
-  console.log('✓ Found', weapons.length, 'weapons');
   
   const maxQuantity = Math.max(...weapons.map(w => w.quantity || 1));
   const maxRange = Math.max(...weapons.map(w => w.range || 1));
@@ -295,95 +299,36 @@ function buildWeaponComparison(weaponData) {
   let html = '';
   for (let i = 0; i < weapons.length; i++) {
     const w = weapons[i];
-    const quantityPercent = (w.quantity / maxQuantity * 100).toFixed(0);
-    const rangePercent = (w.range / maxRange * 100).toFixed(0);
+    const quantityPct = (w.quantity / maxQuantity * 100).toFixed(0);
+    const rangePct = (w.range / maxRange * 100).toFixed(0);
     const color = w.country === 'Iran' ? '#ff7b00' : w.country === 'Israel' ? '#00d4ff' : '#4a90e2';
+    const visual = w.visual || w.icon;
     
-    html += '<div class="weapon-card" style="border-left:4px solid ' + color + '"><div style="display:flex;gap:12px;margin-bottom:14px;"><span style="font-size:1.8rem;">' + w.icon + '</span><div><div style="color:#fff;font-weight:600;">' + w.name + '</div><div style="color:var(--muted);font-size:0.7rem;text-transform:uppercase;margin-top:2px;">' + w.country + '</div></div></div>';
-    html += '<div style="margin-bottom:12px;"><div style="color:var(--muted);font-size:0.7rem;text-transform:uppercase;margin-bottom:6px;">Available Units</div>';
-    html += '<div style="width:100%;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-bottom:4px;"><div style="width:' + quantityPercent + '%;height:100%;background:' + color + ';"></div></div>';
-    html += '<div style="font-size:0.7rem;color:var(--muted);">' + w.quantity + ' units</div></div>';
-    html += '<div style="margin-bottom:12px;"><div style="color:var(--muted);font-size:0.7rem;text-transform:uppercase;margin-bottom:6px;">Operational Range</div>';
-    html += '<div style="width:100%;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-bottom:4px;"><div style="width:' + rangePercent + '%;height:100%;background:' + color + ';"></div></div>';
-    html += '<div style="font-size:0.7rem;color:var(--muted);">' + w.range + ' km</div></div>';
-    html += '<div style="font-size:0.8rem;color:var(--muted);border-top:1px solid rgba(255,255,255,0.05);padding-top:10px;margin-top:10px;">' + w.desc + '</div></div>';
+    html += '<div class="weapon-card" style="border-left:4px solid ' + color + ';position:relative;">';
+    
+    // Visual weapon icon
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">';
+    html += '<div style="font-size:3rem;opacity:0.8;filter:drop-shadow(0 0 10px ' + color + ');">' + visual + '</div>';
+    html += '<div style="text-align:right;"><span style="display:inline-block;background:' + color + ';color:#000;padding:4px 8px;border-radius:3px;font-size:0.7rem;font-weight:600;">' + w.country + '</span></div>';
+    html += '</div>';
+    
+    // Weapon name
+    html += '<div style="margin-bottom:14px;"><div style="color:#fff;font-weight:700;font-size:1.1rem;margin-bottom:4px;">' + w.name + '</div>';
+    html += '<div style="color:var(--muted);font-size:0.75rem;">' + w.desc + '</div></div>';
+    
+    // Quantity bar
+    html += '<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="color:var(--muted);font-size:0.7rem;text-transform:uppercase;font-weight:600;">Available Units</span><span style="color:' + color + ';font-weight:700;">' + w.quantity + '</span></div>';
+    html += '<div style="width:100%;height:8px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;"><div style="width:' + quantityPct + '%;height:100%;background:linear-gradient(90deg, ' + color + ' 0%, rgba(255,255,255,0.3) 100%);"></div></div></div>';
+    
+    // Range bar
+    html += '<div style="margin-bottom:0;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="color:var(--muted);font-size:0.7rem;text-transform:uppercase;font-weight:600;">Operational Range</span><span style="color:' + color + ';font-weight:700;">' + w.range + ' km</span></div>';
+    html += '<div style="width:100%;height:8px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;"><div style="width:' + rangePct + '%;height:100%;background:linear-gradient(90deg, ' + color + ' 0%, rgba(255,255,255,0.3) 100%);"></div></div></div>';
+    
+    html += '</div>';
   }
   
   grid.innerHTML = html;
-  console.log('✓ Rendered' + weapons.length + 'weapons in grid');
-  console.log('=== buildWeaponComparison END ===');
-}
-
-function buildWeaponComparison(weaponData) {
-  const grid = document.getElementById('weaponComparisonGrid');
-  console.log('buildWeaponComparison called', { gridFound: !!grid, hasWeaponData: !!weaponData, currentCategory: currentWeaponCategory });
-  
-  if (!grid) {
-    console.warn('weaponComparisonGrid element not found');
-    return;
-  }
-  if (!weaponData) {
-    console.warn('Weapon data is null or undefined');
-    grid.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);">⚠️ Weapon data not loaded</div>';
-    return;
-  }
-  if (!weaponData[currentWeaponCategory]) {
-    console.warn(`No data for category: ${currentWeaponCategory}`, { availableCategories: Object.keys(weaponData) });
-    grid.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);">⚠️ No data for ${currentWeaponCategory}</div>`;
-    return;
-  }
-  
-  const weapons = weaponData[currentWeaponCategory];
-  console.log(`Rendering ${weapons.length} weapons for ${currentWeaponCategory}`);
-  
-  if (!weapons || weapons.length === 0) {
-    grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);">No weapon data available for this category</div>';
-    return;
-  }
-  
-  const maxQuantity = Math.max(...weapons.map(w => w.quantity || 0));
-  const maxRange = Math.max(...weapons.map(w => w.range || 0));
-  
-  grid.innerHTML = weapons.map((w, i) => {
-    const quantityPercent = maxQuantity > 0 ? (w.quantity / maxQuantity * 100).toFixed(0) : 0;
-    const rangePercent = maxRange > 0 ? (w.range / maxRange * 100).toFixed(0) : 0;
-    const countryColor = w.country === 'Iran' ? '#ff7b00' : w.country === 'Israel' ? '#00d4ff' : '#4a90e2';
-    const mentionsBadge = w.mentions > 0 ? `<div style="background:${countryColor};color:#000;padding:4px 8px;border-radius:3px;font-size:0.65rem;font-weight:600;margin-top:6px;display:inline-block;">📰 ${w.mentions} mentions</div>` : '';
-    
-    return `
-      <div class="weapon-card" style="animation-delay:${i * 0.08}s;border-left:4px solid ${countryColor}">
-        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;">
-          <span style="font-size:1.8rem;">${w.icon}</span>
-          <div>
-            <div style="color:#fff;font-weight:600;font-family:IBM Plex Sans,sans-serif;line-height:1.2;">${w.name}</div>
-            <div style="color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-top:2px;">${w.country}</div>
-          </div>
-        </div>
-        <div style="margin-bottom:12px;">
-          <div style="color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Available Units</div>
-          <div style="width:100%;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-bottom:4px;">
-            <div style="width:${quantityPercent}%;height:100%;background:${countryColor};transition:width 0.6s ease;"></div>
-          </div>
-          <div style="font-family:IBM Plex Mono,monospace;font-size:0.7rem;color:var(--muted);">${w.quantity} units</div>
-        </div>
-        <div style="margin-bottom:12px;">
-          <div style="color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Operational Range</div>
-          <div style="width:100%;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-bottom:4px;">
-            <div style="width:${rangePercent}%;height:100%;background:${countryColor};transition:width 0.6s ease;"></div>
-          </div>
-          <div style="font-family:IBM Plex Mono,monospace;font-size:0.7rem;color:var(--muted);">${w.range} km</div>
-        </div>
-        <div style="font-size:0.8rem;color:var(--muted);line-height:1.4;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
-          ${w.desc}
-          ${mentionsBadge}
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  
-  // Log success
-  console.log(`Rendered ${weapons.length} weapons for category: ${currentWeaponCategory}`);
+  console.log('✓ Rendered', weapons.length, 'weapons');
 }
 
 function buildTimeline(events) {
@@ -935,6 +880,7 @@ function render(data) {
   if (data.weaponComparison) {
     const enrichedWeapons = enrichWeaponDataFromNews(data.weaponComparison, data.newsFeed);
     appData.weaponComparison = enrichedWeapons; // Update appData with enriched version
+    storedWeaponData = enrichedWeapons; // Also store globally for tab switching
     buildWeaponComparison(enrichedWeapons);
   }
   
