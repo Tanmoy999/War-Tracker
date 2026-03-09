@@ -358,6 +358,19 @@
 <script src="lib/leaflet/leaflet.js"></script>
 <script src="lib/chart/chart.umd.min.js"></script>
 <script src="app.js"></script>
+<script>
+// Test initialization - ensure weapons display with fallback data
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    const grid = document.getElementById('weaponComparisonGrid');
+    if (grid && grid.textContent.trim() === '') {
+      console.log('Test: Weapon grid is empty, populating with fallback data');
+      // This is a test to see if the grid is actually rendering
+      grid.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:4px;"><span style="color:var(--orange);">⚠️</span> Checking weapon data... (if this persists, check browser console for errors)</div>';
+    }
+  }, 2000);
+});
+</script>
 
 </body>
 </html>

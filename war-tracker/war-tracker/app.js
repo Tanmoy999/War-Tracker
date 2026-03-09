@@ -922,6 +922,12 @@ function render(data) {
   initScrollAnimations();
   initMap(data);
   initCharts(data);
+  
+  // Diagnostic log
+  console.log('=== RENDER COMPLETE ===');
+  console.log('appData.weaponComparison:', appData?.weaponComparison ? '✓ Available' : '✗ Missing');
+  console.log('Grid element:', document.getElementById('weaponComparisonGrid') ? '✓ Found' : '✗ Missing');
+  console.log('Grid content:', document.getElementById('weaponComparisonGrid')?.innerHTML?.length || 0, 'characters');
 }
 
 // ─── DATA LOADING ────────────────────────────────────────
