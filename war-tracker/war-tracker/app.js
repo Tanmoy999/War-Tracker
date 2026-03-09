@@ -203,6 +203,58 @@ function buildAssets(assets) {
     </div>`).join('');
 }
 
+// ─── WEAPON COMPARISON ───────────────────────────────────
+let currentWeaponCategory = 'drones';
+function switchWeaponCategory(category, btn) {
+  if (!appData?.weaponComparison) return;
+  currentWeaponCategory = category;
+  document.querySelectorAll('.weapon-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  buildWeaponComparison(appData.weaponComparison);
+}
+
+function buildWeaponComparison(weaponData) {
+  const grid = document.getElementById('weaponComparisonGrid');
+  if (!grid || !weaponData || !weaponData[currentWeaponCategory]) return;
+  
+  const weapons = weaponData[currentWeaponCategory];
+  const maxQuantity = Math.max(...weapons.map(w => w.quantity));
+  const maxRange = Math.max(...weapons.map(w => w.range));
+  
+  grid.innerHTML = weapons.map((w, i) => {
+    const quantityPercent = (w.quantity / maxQuantity * 100).toFixed(0);
+    const rangePercent = (w.range / maxRange * 100).toFixed(0);
+    const countryColor = w.country === 'Iran' ? '#ff7b00' : w.country === 'Israel' ? '#00d4ff' : '#4a90e2';
+    
+    return `
+      <div class="weapon-card" style="animation-delay:${i * 0.08}s;border-left:4px solid ${countryColor}">
+        <div class="weapon-header">
+          <span class="weapon-flag">${w.icon}</span>
+          <div>
+            <div class="weapon-name">${w.name}</div>
+            <div class="weapon-country">${w.country}</div>
+          </div>
+        </div>
+        <div class="weapon-metric">
+          <div class="metric-label">Available Units</div>
+          <div class="metric-bar">
+            <div class="metric-fill" style="width:${quantityPercent}%;background:${countryColor};"></div>
+          </div>
+          <div class="metric-value">${w.quantity} units</div>
+        </div>
+        <div class="weapon-metric">
+          <div class="metric-label">Operational Range</div>
+          <div class="metric-bar">
+            <div class="metric-fill" style="width:${rangePercent}%;background:${countryColor};"></div>
+          </div>
+          <div class="metric-value">${w.range} km</div>
+        </div>
+        <div class="weapon-desc">${w.desc}</div>
+      </div>
+    `;
+  }).join('');
+}
+
 function buildTimeline(events) {
   return events.map((e,i) => {
     const cat = categorizeEvent(e);
@@ -747,6 +799,7 @@ function render(data) {
   }
   
   document.getElementById('globalStats').innerHTML = buildGlobalStats(data.globalStats || []);
+  if (data.weaponComparison) buildWeaponComparison(data.weaponComparison);
   document.getElementById('countryGrid').innerHTML = data.countries && Object.keys(data.countries).length > 0
     ? buildCountries(data.countries)
     : '<div class="stat-card muted"><div class="label">Country data</div><div class="sub">Configure ACLED API for live country breakdown</div></div>';
