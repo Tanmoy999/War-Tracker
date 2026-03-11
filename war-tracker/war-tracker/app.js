@@ -1,6 +1,4 @@
 // ─── CONFIG ──────────────────────────────────────────────
-const DATA_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? './data/stats.json' : '/.netlify/functions/stats';
 let appData = null;
 let viewerCount = 847; // Default value, will be updated from real data
 let mapInitialized = false;
@@ -935,12 +933,15 @@ function render(data) {
   console.log('Grid content:', document.getElementById('weaponComparisonGrid')?.innerHTML?.length || 0, 'characters');
 }
 
-// ─── DATA LOADING ────────────────────────────────────────
 async function loadData() {
   try {
     const startTime = performance.now();
-    const res = await fetch(DATA_URL + '?t=' + Date.now());
-    if (!res.ok) throw new Error('Network error');
+    let res = await fetch('/.netlify/functions/stats?t=' + Date.now());
+    if (!res.ok) {
+      console.warn('Live API unavailable, falling back to static local data...');
+      res = await fetch('./data/stats.json?t=' + Date.now());
+      if (!res.ok) throw new Error('Network error');
+    }
     const data = await res.json();
     const loadTime = performance.now() - startTime;
     
