@@ -189,11 +189,11 @@
       <div class="section-label">Data Visualizations</div>
       <div class="charts-grid">
         <div class="chart-panel">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">Casualty Progression Over Time</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">Fatalities by Country</div>
           <canvas id="casualtyChart"></canvas>
         </div>
         <div class="chart-panel">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">Military Assets Comparison</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">Conflict Events by Type</div>
           <canvas id="militaryChart"></canvas>
         </div>
       </div>
@@ -204,6 +204,8 @@
       <div class="section-label">Humanitarian Impact</div>
       <div class="humanitarian-summary" id="humanSummary"></div>
       <div class="human-stats-grid" id="humanStats"></div>
+      <div class="section-sublabel" style="margin-top:16px;">Infrastructure Damage Assessment</div>
+      <div class="infra-grid" id="infraGrid"></div>
     </div>
 
     <!-- Economic Impact -->
@@ -358,48 +360,6 @@
 <script src="lib/leaflet/leaflet.js"></script>
 <script src="lib/chart/chart.umd.min.js"></script>
 <script src="app.js"></script>
-<script>
-// Direct test: Load and render weapon data immediately
-window.testWeaponRender = function() {
-  console.log('Testing weapon render...');
-  fetch('./data/stats.json?t=' + Date.now())
-    .then(r => r.json())
-    .then(data => {
-      console.log('Data loaded:', {
-        hasWeaponComparison: !!data.weaponComparison,
-        categories: data.weaponComparison ? Object.keys(data.weaponComparison) : []
-      });
-      
-      if (data.weaponComparison && data.weaponComparison.drones) {
-        console.log('Drones found:', data.weaponComparison.drones.length);
-        currentWeaponCategory = 'drones';
-        buildWeaponComparison(data.weaponComparison);
-        console.log('Weapon comparison rendered');
-      }
-    })
-    .catch(e => console.error('Failed to test weapons:', e));
-};
-
-// Run test after a short delay
-setTimeout(testWeaponRender, 500);
-
-// Also test in DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    const grid = document.getElementById('weaponComparisonGrid');
-    console.log('Grid status:', {
-      found: !!grid,
-      hasContent: grid ? grid.innerHTML.length > 0 : 'N/A',
-      isVisible: grid ? grid.offsetParent !== null : 'N/A'
-    });
-    
-    if (grid && grid.textContent.trim() === '') {
-      console.log('Grid is empty - running test render');
-      testWeaponRender();
-    }
-  }, 1500);
-});
-</script>
 
 </body>
 </html>
