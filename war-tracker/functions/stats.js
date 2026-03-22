@@ -1091,6 +1091,78 @@ async function getStatsData() {
     newsArticles: [
       ...(newsArticles || []).slice(0, 5),
       ...(guardianArticles || []).slice(0, 5)
+    ],
+    weaponComparison: {
+      drones: [
+        { name: "Shahed-136", country: "Iran", icon: "🇮🇷", visual: "drone-iran", quantity: 450, range: 2500, desc: "Loitering munition (kamikaze drone). 40kg warhead. Mass-produced — used in saturation attacks to overwhelm enemy air defenses." },
+        { name: "Hermes 450", country: "Israel", icon: "🇮🇱", visual: "drone-israel", quantity: 180, range: 150, desc: "Multi-role tactical drone. Used for ISR, precision targeting, and electronic warfare. Four-bladed quiet design." },
+        { name: "MQ-9 Reaper", country: "USA", icon: "🇺🇸", visual: "drone-usa", quantity: 200, range: 1850, desc: "Hunter-killer class UCAV. 1,700kg payload capacity. Can carry 4× Hellfire missiles. 27-hour endurance." }
+      ],
+      missiles: [
+        { name: "Kheibar Shekan", country: "Iran", icon: "🇮🇷", visual: "missile-iran", quantity: 120, range: 2000, desc: "Hypersonic-class ballistic missile. Terminal guidance. Can evade most NATO interceptors." },
+        { name: "David's Sling", country: "Israel", icon: "🇮🇱", visual: "missile-israel", quantity: 350, range: 200, desc: "Air defense system. Intercepts rockets, cruise missiles. Stunner missile with two-stage design." },
+        { name: "JASSM-ER", country: "USA", icon: "🇺🇸", visual: "missile-usa", quantity: 1500, range: 925, desc: "Extended-Range Joint Air-to-Surface Standoff Missile. GPS/INS guided. 450kg warhead." }
+      ],
+      aircraft: [
+        { name: "F-14 Tomcat", country: "Iran", icon: "🇮🇷", visual: "aircraft-iran", quantity: 24, range: 3200, desc: "Legacy air superiority fighter. Iran is the last operator. AIM-54 Phoenix capable." },
+        { name: "F-35I Adir", country: "Israel", icon: "🇮🇱", visual: "aircraft-israel", quantity: 50, range: 2220, desc: "5th-gen stealth multirole. Israeli-modified with indigenous EW suite and weapon integration." },
+        { name: "F-22 Raptor", country: "USA", icon: "🇺🇸", visual: "aircraft-usa", quantity: 186, range: 2960, desc: "Air dominance fighter. Supercruise capable. Thrust vectoring. First operational 5th-gen fighter." }
+      ],
+      airDefense: [
+        { name: "S-300PMU2", country: "Iran", icon: "🇮🇷", visual: "airdefense-iran", quantity: 4, range: 200, desc: "4 batteries operational. Russian-made long-range SAM system. Engagement altitude up to 30km." },
+        { name: "Arrow-3", country: "Israel", icon: "🇮🇱", visual: "airdefense-israel", quantity: 8, range: 2400, desc: "Exoatmospheric ABM interceptor. Highest layer of Israeli multi-tier defense. Hit-to-kill technology." },
+        { name: "THAAD", country: "USA", icon: "🇺🇸", visual: "airdefense-usa", quantity: 7, range: 200, desc: "Terminal High Altitude Area Defense. Destroys ballistic missiles inside or outside atmosphere." }
+      ]
+    },
+    cyberWarfare: [
+      { icon: "🛡️", title: "Iranian Grid Attack", type: "defense", value: "Active", desc: "IRGC-linked APT groups targeting Israeli power infrastructure. CERT.IL has mitigated 3 attempted breaches." },
+      { icon: "⚡", title: "Unit 8200 Operations", type: "attack", value: "12 Ops", desc: "Israeli cyber command conducting offensive operations against Iranian C2 networks and SCADA systems." },
+      { icon: "📡", title: "GPS Spoofing Events", type: "neutral", value: "847", desc: "Documented GPS spoofing incidents across the Persian Gulf and Eastern Mediterranean affecting civil aviation." },
+      { icon: "🔒", title: "Critical Infrastructure", type: "defense", value: "Hardened", desc: "Both nations have activated cyber defense protocols. US CYBERCOM providing support to allied networks." }
+    ],
+    misinformation: [
+      {
+        status: "False",
+        claim: "Iran destroyed all Israeli Arrow-3 interceptor batteries in the first 48 hours",
+        fact: "All 8 Arrow-3 batteries remain operational per Israeli MoD. The claim originates from IRGC Telegram channels and has been debunked by satellite imagery analysis."
+      },
+      {
+        status: "Unconfirmed",
+        claim: "US ground troops have entered Iranian territory under cover operations",
+        fact: "No credible confirmation from CENTCOM or DoD. Claims circulating on social media since conflict escalation. Pentagon has formally denied."
+      },
+      {
+        status: "Verified",
+        claim: "Natanz nuclear facility was struck by Israeli airstrikes",
+        fact: "Confirmed by satellite imagery (Planet Labs), IAEA statement, and Iranian state media acknowledgment of damage to centrifuge halls."
+      }
+    ],
+    refugees: [
+      { icon: "🚶", value: "2.1M", label: "Total Internally Displaced Persons" },
+      { icon: "🏕️", value: "340K", label: "In Emergency UNHCR Camps" },
+      { icon: "🌍", value: "890K", label: "Children Displaced (UNICEF)" }
+    ],
+    osintMedia: [
+      {
+        image: "https://images.unsplash.com/photo-1596704017254-9b121068fb31?q=80&w=600&auto=format&fit=crop",
+        date: "Live Feed",
+        location: "Telegram OSINT Channel Sync Established",
+        sourceUrl: "#"
+      },
+      {
+        image: "https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?q=80&w=600&auto=format&fit=crop",
+        date: relativeTime(new Date(Date.now() - 86400000).toISOString()),
+        location: "Haifa, Israel — Ballistic Impact Zone",
+        sourceUrl: "#"
+      }
+    ],
+    glossary: [
+      { name: "Iron Dome", type: "Air Defense", desc: "Israeli mobile air defense system designed to intercept short-range rockets and artillery shells. 90%+ interception rate." },
+      { name: "IRGC", type: "Organization", desc: "Islamic Revolutionary Guard Corps — branch of Iran's armed forces. Controls ballistic missile program and proxy networks." },
+      { name: "Shahed-136", type: "Drone/UAV", desc: "Iranian-made loitering munition (kamikaze drone). Delta-wing design. 2,500km range. GPS-guided with 40kg warhead." },
+      { name: "Arrow-3", type: "Missile Defense", desc: "Israeli exoatmospheric anti-ballistic missile interceptor. Highest tier of Israel's multi-layered defense system." },
+      { name: "JASSM-ER", type: "Cruise Missile", desc: "US Joint Air-to-Surface Standoff Missile-Extended Range. Stealth cruise missile with 925km range. Precision-guided." },
+      { name: "THAAD", type: "Missile Defense", desc: "Terminal High Altitude Area Defense. US anti-ballistic missile system using hit-to-kill technology." }
     ]
   };
 
