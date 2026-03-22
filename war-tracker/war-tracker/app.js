@@ -1148,14 +1148,6 @@ function render(data) {
   
   document.getElementById('globalStats').innerHTML = buildGlobalStats(data.globalStats || []);
   
-  // Enrich weapon data with real news mentions
-  if (data.weaponComparison) {
-    const enrichedWeapons = enrichWeaponDataFromNews(data.weaponComparison, data.newsFeed);
-    appData.weaponComparison = enrichedWeapons; // Update appData with enriched version
-    storedWeaponData = enrichedWeapons; // Also store globally for tab switching
-    buildWeaponComparison(enrichedWeapons);
-  }
-  
   document.getElementById('countryGrid').innerHTML = data.countries && Object.keys(data.countries).length > 0
     ? buildCountries(data.countries)
     : '<div class="stat-card muted"><div class="label">Country data</div><div class="sub">Configure ACLED API for live country breakdown</div></div>';
@@ -1165,27 +1157,6 @@ function render(data) {
     ? buildRegional(data.regional)
     : '<div class="region-card"><div class="r-name">Regional data loading...</div><div class="r-status">Configure ACLED API</div></div>';
   document.getElementById('sources').innerHTML = '<strong>Sources:</strong> ' + (data.sources || []).join(' · ');
-
-  // ML Strategic Predictor — initial render then start live fluctuation
-  if (data.mlPrediction) {
-    const ml = data.mlPrediction;
-    const card = document.getElementById('mlCard');
-    if (card) {
-      card.className = `ml-card ${ml.color}`;
-      card.style.borderColor = ml.color === 'cyan' ? 'var(--cyan)' : ml.color === 'orange' ? 'var(--orange)' : 'var(--muted)';
-      const cssColor = ml.color === 'cyan' ? 'var(--cyan)' : ml.color === 'orange' ? 'var(--orange)' : 'var(--muted)';
-      document.getElementById('mlAdvantage').innerHTML = `<span style="color:${cssColor}">${ml.advantage}</span>`;
-      document.getElementById('mlSummary').textContent = ml.summary;
-      document.getElementById('mlBarIran').style.width   = ml.iranScore   + '%';
-      document.getElementById('mlBarIsrael').style.width = ml.israelScore + '%';
-      document.getElementById('mlScoreIran').textContent   = ml.iranScore;
-      document.getElementById('mlScoreIsrael').textContent = ml.israelScore;
-    }
-    // Start live fluctuation every 45 seconds
-    if (!window._mlInterval) {
-      window._mlInterval = setInterval(updateMLPredictor, 45000);
-    }
-  }
 
   // New sections
   if (data.humanitarian) buildHumanitarian(data.humanitarian);

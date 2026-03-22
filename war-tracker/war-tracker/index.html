@@ -135,45 +135,10 @@
 
   <div class="main">
 
-    <!-- ML Strategic Evaluator -->
-    <div id="mlPredictionSection" style="margin-bottom: 24px;">
-      <div class="section-label" style="display:flex;align-items:center;">
-        <span style="font-size:1.1rem;margin-right:8px;">🤖</span> ML Strategic Momentum Predictor
-      </div>
-      <div id="mlCard" class="ml-card error-card" style="border: 1px solid var(--border); background: var(--card-bg); padding: 16px; border-radius: 6px;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Current Advantage Evaluation</div>
-        <div id="mlAdvantage" style="font-size:1.4rem;font-weight:700;margin-bottom:8px;">Evaluating models...</div>
-        <div id="mlSummary" style="font-size:0.9rem;color:var(--muted);line-height:1.5;margin-bottom:12px;">Synthesizing live ACLED, ReliefWeb, and NLP sentiment streams...</div>
-        <div class="ml-bar-wrap" style="width:100%;height:8px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;display:flex;">
-          <div id="mlBarIran" style="height:100%;background:var(--orange);transition:width 1s ease;"></div>
-          <div id="mlBarIsrael" style="height:100%;background:var(--cyan);transition:width 1s ease;"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--muted);">
-          <span style="color:var(--orange);"><span id="mlScoreIran">0</span>% Iran</span>
-          <span style="color:var(--cyan);"><span id="mlScoreIsrael">0</span>% Israel</span>
-        </div>
-      </div>
-    </div>
-
     <!-- Global Stats -->
     <div id="globalStatsSection">
       <div class="section-label">Global Casualties — All Sides</div>
       <div class="stat-grid" id="globalStats"></div>
-    </div>
-
-    <!-- Weapon Comparison -->
-    <div>
-      <div class="section-label">⚔️ Weapon Systems Comparison</div>
-      <div class="weapon-category-tabs">
-        <button class="weapon-tab active" onclick="switchWeaponCategory('drones', this)">🚁 Drones</button>
-        <button class="weapon-tab" onclick="switchWeaponCategory('missiles', this)">🚀 Missiles</button>
-        <button class="weapon-tab" onclick="switchWeaponCategory('aircraft', this)">✈️ Aircraft</button>
-        <button class="weapon-tab" onclick="switchWeaponCategory('airDefense', this)">🛡️ Air Defense</button>
-      </div>
-      <div style="font-size:0.75rem;color:var(--muted);margin-bottom:12px;font-family:'IBM Plex Mono',monospace;">
-        📊 Weapon specifications from public military databases • News mentions tracked from live feeds
-      </div>
-      <div class="weapon-grid" id="weaponComparisonGrid"></div>
     </div>
 
     <!-- Interactive Map -->
@@ -210,9 +175,55 @@
 
     <!-- Economic Impact -->
     <div>
-      <div class="section-label">Economic Impact</div>
+      <div class="section-label">Global Economic Impact & Strategic Analysis</div>
       <div class="economic-summary" id="econSummary"></div>
       <div class="econ-stats-grid" id="econStats"></div>
+      
+      <!-- Economic Analysis Cards -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2px; margin-top: 20px;">
+        <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Energy Markets & Oil Impact</div>
+          <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
+            <strong style="color:var(--orange);">Oil Price Volatility:</strong> Conflict-related tensions have contributed to elevated oil prices, affecting global energy costs. Brent Crude has seen significant fluctuations related to regional escalation events and disruptions to shipping routes through the Strait of Hormuz. Energy hedging markets and futures pricing reflect ongoing uncertainty.
+          </div>
+        </div>
+        
+        <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Global Supply Chain Disruptions</div>
+          <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
+            <strong style="color:var(--yellow);">Trade Impact:</strong> Global supply chains face challenges from regional instability, particularly in maritime shipping through Middle Eastern waterways. Critical electronics, petrochemicals, and rare earth materials face elevated shipping costs, longer transit times, and increased insurance premiums. Rerouting around traditional corridors adds 15-30% to logistics expenses.
+          </div>
+        </div>
+        
+        <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">United States Economic & Strategic Position</div>
+          <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
+            <strong style="color:var(--red);">Defense & Trade Dynamics:</strong> U.S. military commitments and defense expenditures for regional operations have economic multiplier effects both domestically and globally. Arms sales, military aid packages, and forward defense posturing create strategic partnerships with regional allies. Export controls and sanctions mechanisms directly impact bilateral trade relationships and dollar-denominated transactions.
+          </div>
+        </div>
+        
+        <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Israeli Economic Indicators</div>
+          <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
+            <strong style="color:var(--cyan);">Defense Spending & Recovery:</strong> Defense allocation impacts broader social and infrastructure spending. Tourism, technology exports (cybersecurity, semiconductors), and agricultural sectors face both restrictions and opportunities. International aid, including from the United States and diaspora communities, provides substantial economic counterbalance to conflict-related costs.
+          </div>
+        </div>
+        
+        <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Iranian Sanctions & Economic Pressure</div>
+          <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
+            <strong style="color:var(--orange);">Escalating Constraints:</strong> Existing multilateral sanctions regimes are reinforced during conflict escalation, limiting Iran's access to international markets, financial systems, and foreign currency reserves. Oil export restrictions, banking sector isolation, and technology embargoes create substantial economic constraints on domestic development and military procurement capabilities.
+          </div>
+        </div>
+        
+        <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Regional Trade & Partnerships</div>
+          <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
+            <strong style="color:var(--yellow);">Spillover Effects:</strong> Neighboring economies (UAE, Saudi Arabia, Egypt, Jordan, Iraq, Kuwait) face significant spillover effects through refugee flows, weapons proliferation, regional militarization, and disrupted trade corridors. Established trade agreements and regional cooperation mechanisms are tested and reshaped by ongoing conflict dynamics.
+          </div>
+        </div>
+      </div>
+      
       <div class="chart-panel" style="margin-top:16px;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">Brent Crude Oil Price — Conflict Impact</div>
         <canvas id="oilChart"></canvas>
@@ -266,6 +277,30 @@
     <div>
       <div class="section-label">Country Breakdown</div>
       <div class="country-grid" id="countryGrid"></div>
+    </div>
+
+    <!-- Sonar 21: Expert Geopolitical Commentary -->
+    <div>
+      <div class="section-label">🔊 Expert Analysis & Geopolitical Perspectives</div>
+      <div style="background: var(--panel); border: 1px solid var(--border); padding: 24px; border-radius: 4px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--orange);margin-bottom:12px;">⚡ What is Sonar 21?</div>
+            <div style="font-size:0.95rem;line-height:1.7;color:var(--white);">
+              <strong>Sonar 21</strong> is an independent geopolitical analysis platform providing expert commentary and strategic assessments of international conflicts, military developments, and diplomatic dynamics. Founded and led by intelligence analysts and defense experts, Sonar 21 offers in-depth scrutiny of the Iran-Israel-US conflict with diverse viewpoints from military professionals, foreign policy experts, and independent journalists.
+            </div>
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;">📊 Coverage Focus</div>
+            <div style="font-size:0.95rem;line-height:1.7;color:var(--white);">
+              Coverage includes tactical military analysis, strategic objectives beyond media narratives, humanitarian implications, diplomatic developments, and global economic consequences. Sonar 21 examines troop movements, supply lines, technological deployments, and decision-making processes that shape conflict trajectories. Analysis emphasizes factual assessment over political advocacy.
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <a href="https://sonar21.com" target="_blank" style="display:inline-block;background:var(--orange);color:var(--dark);padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;font-weight:700;border-radius:3px;">→ Visit Sonar 21 for Full Analysis</a>
+        </div>
+      </div>
     </div>
 
     <!-- Military Assets -->
