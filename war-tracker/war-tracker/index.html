@@ -32,7 +32,7 @@
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#0a0a0f"/>
 
-<title>Conflict Tracker — Iran · Israel · USA · 2026 · Live Map & Stats</title>
+<title>Conflict Tracker — Iran · Israel · USA · 2026 · Live Map &amp; Stats</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="lib/leaflet/leaflet.css"/>
 <link rel="stylesheet" href="styles.css"/>
@@ -135,13 +135,13 @@
 
   <div class="main">
 
-    <!-- Global Stats -->
+    <!-- ① Global Stats -->
     <div id="globalStatsSection">
       <div class="section-label">Global Casualties — All Sides</div>
       <div class="stat-grid" id="globalStats"></div>
     </div>
 
-    <!-- Interactive Map -->
+    <!-- ② Interactive Map -->
     <div>
       <div class="section-label">Live Conflict Map</div>
       <div id="mapSection">
@@ -149,7 +149,7 @@
       </div>
     </div>
 
-    <!-- Charts -->
+    <!-- ③ Charts -->
     <div>
       <div class="section-label">Data Visualizations</div>
       <div class="charts-grid">
@@ -164,7 +164,7 @@
       </div>
     </div>
 
-    <!-- Humanitarian Impact -->
+    <!-- ④ Humanitarian Impact -->
     <div>
       <div class="section-label">Humanitarian Impact</div>
       <div class="humanitarian-summary" id="humanSummary"></div>
@@ -173,16 +173,88 @@
       <div class="infra-grid" id="infraGrid"></div>
     </div>
 
-    <!-- Economic Impact -->
+    <!-- ⑤ ML Strategic Predictor -->
     <div>
-      <div class="section-label">Global Economic Impact & Strategic Analysis</div>
+      <div class="section-label">🤖 ML Strategic Momentum Predictor</div>
+      <div class="ml-card muted" id="mlCard" style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:28px;animation:fadeUp 0.5s ease both;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px;">
+          <!-- Iran -->
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--orange);">🇮🇷 Iran — Strategic Score</span>
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--orange);" id="mlScoreIran">—</span>
+            </div>
+            <div style="width:100%;height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden;">
+              <div id="mlBarIran" style="height:100%;background:linear-gradient(90deg,var(--orange),#ffaa44);border-radius:5px;transition:width 0.8s ease;width:0%;"></div>
+            </div>
+          </div>
+          <!-- Israel -->
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--cyan);">🇮🇱 Israel — Strategic Score</span>
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--cyan);" id="mlScoreIsrael">—</span>
+            </div>
+            <div style="width:100%;height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden;">
+              <div id="mlBarIsrael" style="height:100%;background:linear-gradient(90deg,var(--cyan),#88eeff);border-radius:5px;transition:width 0.8s ease;width:0%;"></div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:center;border-top:1px solid var(--border);padding-top:16px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Current Assessment</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.04em;" id="mlAdvantage">Calculating...</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);margin-top:10px;line-height:1.6;max-width:600px;margin-left:auto;margin-right:auto;" id="mlSummary">Synthesizing ACLED conflict events, Alpha Vantage economic data, and NLP news sentiment...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑥ Military Assets & Weapon Comparison -->
+    <div>
+      <div class="section-label">Military Assets &amp; Strikes</div>
+      <div class="assets-grid" id="assetsGrid"></div>
+
+      <!-- Weapon Comparison -->
+      <div style="margin-top:24px;">
+        <div class="section-sublabel">Weapons &amp; Systems Comparison</div>
+        <div class="weapon-category-tabs">
+          <button class="weapon-tab active" onclick="switchWeaponCategory('drones',this)" id="tab-drones">🛸 Drones</button>
+          <button class="weapon-tab" onclick="switchWeaponCategory('missiles',this)" id="tab-missiles">🚀 Missiles</button>
+          <button class="weapon-tab" onclick="switchWeaponCategory('aircraft',this)" id="tab-aircraft">✈️ Aircraft</button>
+          <button class="weapon-tab" onclick="switchWeaponCategory('airDefense',this)" id="tab-airDefense">🛡️ Air Defense</button>
+        </div>
+        <div class="weapon-grid" id="weaponComparisonGrid">
+          <div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.7rem;">Loading weapon data...</div>
+        </div>
+      </div>
+
+      <!-- Weapons & Technology Glossary -->
+      <div class="section-sublabel" style="margin-top:24px;">Weapons &amp; Technology Glossary</div>
+      <div class="glossary-grid" id="glossaryGrid"></div>
+    </div>
+
+    <!-- ⑦ Key Events Timeline -->
+    <div>
+      <div class="section-label">Key Events Timeline</div>
+      <div class="timeline">
+        <div class="timeline-filters">
+          <button class="timeline-filter active" onclick="filterTimeline('all')">All</button>
+          <button class="timeline-filter" onclick="filterTimeline('strikes')">⚔️ Strikes</button>
+          <button class="timeline-filter" onclick="filterTimeline('casualties')">💀 Casualties</button>
+          <button class="timeline-filter" onclick="filterTimeline('diplomacy')">🕊️ Diplomacy</button>
+        </div>
+        <div class="timeline-events" id="timeline"></div>
+      </div>
+    </div>
+
+    <!-- ⑧ Economic Impact -->
+    <div>
+      <div class="section-label">Global Economic Impact &amp; Strategic Analysis</div>
       <div class="economic-summary" id="econSummary"></div>
       <div class="econ-stats-grid" id="econStats"></div>
       
       <!-- Economic Analysis Cards -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2px; margin-top: 20px;">
         <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Energy Markets & Oil Impact</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Energy Markets &amp; Oil Impact</div>
           <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
             <strong style="color:var(--orange);">Oil Price Volatility:</strong> Conflict-related tensions have contributed to elevated oil prices, affecting global energy costs. Brent Crude has seen significant fluctuations related to regional escalation events and disruptions to shipping routes through the Strait of Hormuz. Energy hedging markets and futures pricing reflect ongoing uncertainty.
           </div>
@@ -196,28 +268,28 @@
         </div>
         
         <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">United States Economic & Strategic Position</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">United States Economic &amp; Strategic Position</div>
           <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
-            <strong style="color:var(--red);">Defense & Trade Dynamics:</strong> U.S. military commitments and defense expenditures for regional operations have economic multiplier effects both domestically and globally. Arms sales, military aid packages, and forward defense posturing create strategic partnerships with regional allies. Export controls and sanctions mechanisms directly impact bilateral trade relationships and dollar-denominated transactions.
+            <strong style="color:var(--red);">Defense &amp; Trade Dynamics:</strong> U.S. military commitments and defense expenditures for regional operations have economic multiplier effects both domestically and globally. Arms sales, military aid packages, and forward defense posturing create strategic partnerships with regional allies. Export controls and sanctions mechanisms directly impact bilateral trade relationships and dollar-denominated transactions.
           </div>
         </div>
         
         <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Israeli Economic Indicators</div>
           <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
-            <strong style="color:var(--cyan);">Defense Spending & Recovery:</strong> Defense allocation impacts broader social and infrastructure spending. Tourism, technology exports (cybersecurity, semiconductors), and agricultural sectors face both restrictions and opportunities. International aid, including from the United States and diaspora communities, provides substantial economic counterbalance to conflict-related costs.
+            <strong style="color:var(--cyan);">Defense Spending &amp; Recovery:</strong> Defense allocation impacts broader social and infrastructure spending. Tourism, technology exports (cybersecurity, semiconductors), and agricultural sectors face both restrictions and opportunities. International aid, including from the United States and diaspora communities, provides substantial economic counterbalance to conflict-related costs.
           </div>
         </div>
         
         <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Iranian Sanctions & Economic Pressure</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Iranian Sanctions &amp; Economic Pressure</div>
           <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
             <strong style="color:var(--orange);">Escalating Constraints:</strong> Existing multilateral sanctions regimes are reinforced during conflict escalation, limiting Iran's access to international markets, financial systems, and foreign currency reserves. Oil export restrictions, banking sector isolation, and technology embargoes create substantial economic constraints on domestic development and military procurement capabilities.
           </div>
         </div>
         
         <div style="background: var(--panel); border: 1px solid var(--border); padding: 20px; animation: fadeUp 0.5s ease both;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Regional Trade & Partnerships</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Regional Trade &amp; Partnerships</div>
           <div style="font-size:0.95rem;line-height:1.6;color:var(--white);">
             <strong style="color:var(--yellow);">Spillover Effects:</strong> Neighboring economies (UAE, Saudi Arabia, Egypt, Jordan, Iraq, Kuwait) face significant spillover effects through refugee flows, weapons proliferation, regional militarization, and disrupted trade corridors. Established trade agreements and regional cooperation mechanisms are tested and reshaped by ongoing conflict dynamics.
           </div>
@@ -230,14 +302,123 @@
       </div>
     </div>
 
-    <!-- Live News Feed -->
+    <!-- ⑨ Country Breakdown -->
+    <div>
+      <div class="section-label">Country Breakdown</div>
+      <div class="country-grid" id="countryGrid"></div>
+    </div>
+
+    <!-- ⑩ Regional Spillover -->
+    <div>
+      <div class="section-label">Regional Spillover</div>
+      <div class="region-grid" id="regionGrid"></div>
+    </div>
+
+    <!-- ⑪ Cyber Warfare -->
+    <div>
+      <div class="section-label">🛡️ Cyber Warfare &amp; Digital Operations</div>
+      <div class="cyber-grid" id="cyberGrid">
+        <div class="cyber-card" style="grid-column:1/-1;padding:20px;text-align:center;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.7rem;">Loading cyber data...</div>
+      </div>
+    </div>
+
+    <!-- ⑫ Refugee & Displacement Flows -->
+    <div>
+      <div class="section-label">🏕️ Refugee &amp; Displacement Flows</div>
+      <div class="refugee-grid" id="refugeeGrid">
+        <div style="padding:20px;text-align:center;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.7rem;">Loading refugee data...</div>
+      </div>
+    </div>
+
+    <!-- ⑬ Misinformation Hub -->
+    <div>
+      <div class="section-label">⚠️ Misinformation &amp; Fact-Check Hub</div>
+      <div class="misinfo-hub" id="misinfoGrid">
+        <div style="padding:20px;text-align:center;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.7rem;">Loading fact-check data...</div>
+      </div>
+    </div>
+
+    <!-- ⑭ OSINT Media -->
+    <div>
+      <div class="section-label">📡 OSINT &amp; Verified Media</div>
+      <div class="osint-grid" id="osintGrid">
+        <div style="padding:20px;text-align:center;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.7rem;">Loading OSINT media...</div>
+      </div>
+    </div>
+
+    <!-- ⑮ Live News Feed -->
     <div>
       <div class="section-label">Live News Feed</div>
       <div class="news-feed" id="newsFeed"></div>
     </div>
 
-    <!-- Donate Section (Inline) -->
-    <div id="donate">
+    <!-- ⑯ Expert Analysis (Sonar 21) -->
+    <div>
+      <div class="section-label">🔊 Expert Analysis &amp; Geopolitical Perspectives</div>
+      <div style="background: var(--panel); border: 1px solid var(--border); padding: 24px; border-radius: 4px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--orange);margin-bottom:12px;">⚡ What is Sonar 21?</div>
+            <div style="font-size:0.95rem;line-height:1.7;color:var(--white);">
+              <strong>Sonar 21</strong> is an independent geopolitical analysis platform providing expert commentary and strategic assessments of international conflicts, military developments, and diplomatic dynamics. Founded and led by intelligence analysts and defense experts, Sonar 21 offers in-depth scrutiny of the Iran-Israel-US conflict with diverse viewpoints from military professionals, foreign policy experts, and independent journalists.
+            </div>
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;">📊 Coverage Focus</div>
+            <div style="font-size:0.95rem;line-height:1.7;color:var(--white);">
+              Coverage includes tactical military analysis, strategic objectives beyond media narratives, humanitarian implications, diplomatic developments, and global economic consequences. Sonar 21 examines troop movements, supply lines, technological deployments, and decision-making processes that shape conflict trajectories. Analysis emphasizes factual assessment over political advocacy.
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <a href="https://sonar21.com" target="_blank" style="display:inline-block;background:var(--orange);color:var(--dark);padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;font-weight:700;border-radius:3px;">→ Visit Sonar 21 for Full Analysis</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑰ About Section -->
+    <div id="about">
+      <div class="section-label">ℹ️ About Conflict Tracker</div>
+      <div class="about-section">
+        <div class="about-grid">
+          <div class="about-card">
+            <div class="about-card-icon">🎯</div>
+            <h3>Our Mission</h3>
+            <p>Conflict Tracker is an independent, open-source data portal providing real-time statistics, interactive visualizations, and a comprehensive timeline of the 2025-2026 Iran-Israel-US conflict. We make conflict data accessible, transparent, and understandable.</p>
+          </div>
+          <div class="about-card">
+            <div class="about-card-icon">📊</div>
+            <h3>Methodology</h3>
+            <p>We aggregate data from 20+ verified international sources including Reuters, Al Jazeera, CENTCOM, UN OCHA, WHO, UNHCR, and MSF. All figures are cross-referenced before publication and updated every 60 seconds.</p>
+          </div>
+          <div class="about-card">
+            <div class="about-card-icon">⚠️</div>
+            <h3>Disclaimer</h3>
+            <p>This is an informational portal only. We are not affiliated with any government or military. Casualty figures are contested by all sides and change rapidly during active conflict. Always verify from official sources.</p>
+          </div>
+          <div class="about-card">
+            <div class="about-card-icon">💻</div>
+            <h3>Open Source</h3>
+            <p>Conflict Tracker is fully open source. View our code, contribute, or fork the project on <a href="https://github.com/Tanmoy999/War-Tracker" target="_blank" style="color:var(--cyan);text-decoration:none;">GitHub →</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑱ Sources -->
+    <div class="sources-bar" id="sources">
+      <strong>Sources:</strong>
+    </div>
+
+    <!-- ⑲ Update Bar -->
+    <div class="update-bar">
+      <strong>⟳</strong>
+      <span>Data refreshes automatically every 60 seconds. Last pulled: <span id="fetchTime">—</span></span>
+      <span style="margin-left:auto;color:var(--muted);">Data is compiled from public news sources. Figures change rapidly during active conflict.</span>
+    </div>
+
+    <!-- ⑳ Donate Section — LAST -->
+    <div id="donate" style="margin-top:16px;">
       <div class="section-label">💚 Donate — Humanitarian Relief</div>
       <div class="primary-donate-box">
         <div class="donate-box-title">SUPPORT HUMANITARIAN RELIEF VIA PAYPAL</div>
@@ -271,107 +452,6 @@
         <a href="https://www.unicef.org/donate" target="_blank" class="org-chip">💚 UNICEF</a>
         <a href="https://www.wfp.org/donate" target="_blank" class="org-chip">💚 World Food Programme</a>
       </div>
-    </div>
-
-    <!-- Countries -->
-    <div>
-      <div class="section-label">Country Breakdown</div>
-      <div class="country-grid" id="countryGrid"></div>
-    </div>
-
-    <!-- Sonar 21: Expert Geopolitical Commentary -->
-    <div>
-      <div class="section-label">🔊 Expert Analysis & Geopolitical Perspectives</div>
-      <div style="background: var(--panel); border: 1px solid var(--border); padding: 24px; border-radius: 4px; margin-bottom: 20px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-          <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--orange);margin-bottom:12px;">⚡ What is Sonar 21?</div>
-            <div style="font-size:0.95rem;line-height:1.7;color:var(--white);">
-              <strong>Sonar 21</strong> is an independent geopolitical analysis platform providing expert commentary and strategic assessments of international conflicts, military developments, and diplomatic dynamics. Founded and led by intelligence analysts and defense experts, Sonar 21 offers in-depth scrutiny of the Iran-Israel-US conflict with diverse viewpoints from military professionals, foreign policy experts, and independent journalists.
-            </div>
-          </div>
-          <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;">📊 Coverage Focus</div>
-            <div style="font-size:0.95rem;line-height:1.7;color:var(--white);">
-              Coverage includes tactical military analysis, strategic objectives beyond media narratives, humanitarian implications, diplomatic developments, and global economic consequences. Sonar 21 examines troop movements, supply lines, technological deployments, and decision-making processes that shape conflict trajectories. Analysis emphasizes factual assessment over political advocacy.
-            </div>
-          </div>
-        </div>
-        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
-          <a href="https://sonar21.com" target="_blank" style="display:inline-block;background:var(--orange);color:var(--dark);padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;font-weight:700;border-radius:3px;">→ Visit Sonar 21 for Full Analysis</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Military Assets -->
-    <div>
-      <div class="section-label">Military Assets &amp; Strikes</div>
-      <div class="assets-grid" id="assetsGrid"></div>
-      
-      <!-- Weapons & Technology Glossary -->
-      <div class="section-sublabel" style="margin-top: 16px;">Weapons &amp; Technology Glossary</div>
-      <div class="glossary-grid" id="glossaryGrid"></div>
-    </div>
-
-    <!-- Timeline -->
-    <div>
-      <div class="section-label">Key Events Timeline</div>
-      <div class="timeline">
-        <div class="timeline-filters">
-          <button class="timeline-filter active" onclick="filterTimeline('all')">All</button>
-          <button class="timeline-filter" onclick="filterTimeline('strikes')">⚔️ Strikes</button>
-          <button class="timeline-filter" onclick="filterTimeline('casualties')">💀 Casualties</button>
-          <button class="timeline-filter" onclick="filterTimeline('diplomacy')">🕊️ Diplomacy</button>
-        </div>
-        <div class="timeline-events" id="timeline"></div>
-      </div>
-    </div>
-
-    <!-- Regional -->
-    <div>
-      <div class="section-label">Regional Spillover</div>
-      <div class="region-grid" id="regionGrid"></div>
-    </div>
-
-    <!-- About Section -->
-    <div id="about">
-      <div class="section-label">ℹ️ About Conflict Tracker</div>
-      <div class="about-section">
-        <div class="about-grid">
-          <div class="about-card">
-            <div class="about-card-icon">🎯</div>
-            <h3>Our Mission</h3>
-            <p>Conflict Tracker is an independent, open-source data portal providing real-time statistics, interactive visualizations, and a comprehensive timeline of the 2025-2026 Iran-Israel-US conflict. We make conflict data accessible, transparent, and understandable.</p>
-          </div>
-          <div class="about-card">
-            <div class="about-card-icon">📊</div>
-            <h3>Methodology</h3>
-            <p>We aggregate data from 20+ verified international sources including Reuters, Al Jazeera, CENTCOM, UN OCHA, WHO, UNHCR, and MSF. All figures are cross-referenced before publication and updated every 60 seconds.</p>
-          </div>
-          <div class="about-card">
-            <div class="about-card-icon">⚠️</div>
-            <h3>Disclaimer</h3>
-            <p>This is an informational portal only. We are not affiliated with any government or military. Casualty figures are contested by all sides and change rapidly during active conflict. Always verify from official sources.</p>
-          </div>
-          <div class="about-card">
-            <div class="about-card-icon">💻</div>
-            <h3>Open Source</h3>
-            <p>Conflict Tracker is fully open source. View our code, contribute, or fork the project on <a href="https://github.com/Tanmoy999/War-Tracker" target="_blank" style="color:var(--cyan);text-decoration:none;">GitHub →</a></p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Sources -->
-    <div class="sources-bar" id="sources">
-      <strong>Sources:</strong>
-    </div>
-
-    <!-- Update Bar -->
-    <div class="update-bar">
-      <strong>⟳</strong>
-      <span>Data refreshes automatically every 60 seconds. Last pulled: <span id="fetchTime">—</span></span>
-      <span style="margin-left:auto;color:var(--muted);">Data is compiled from public news sources. Figures change rapidly during active conflict.</span>
     </div>
 
   </div>

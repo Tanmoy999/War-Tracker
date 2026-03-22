@@ -1137,7 +1137,6 @@ function render(data) {
   if (m.viewers) {
     viewerCount = m.viewers;
     updateViewerDisplay();
-    // Track viewer count to GA
     if (typeof gtag !== 'undefined') {
       gtag('event', 'page_view', {
         'viewers': viewerCount,
@@ -1158,20 +1157,39 @@ function render(data) {
     : '<div class="region-card"><div class="r-name">Regional data loading...</div><div class="r-status">Configure ACLED API</div></div>';
   document.getElementById('sources').innerHTML = '<strong>Sources:</strong> ' + (data.sources || []).join(' · ');
 
-  // New sections
+  // Core sections
   if (data.humanitarian) buildHumanitarian(data.humanitarian);
   if (data.economic) {
     buildEconomic(data.economic);
     initOilChart(data.economic);
   }
   if (data.newsFeed && data.newsFeed.length > 0) buildNewsFeed(data.newsFeed);
+  if (data.glossary) buildGlossary(data.glossary);
+
+  // Additional sections (new in this update)
+  if (data.cyberWarfare) buildCyberWarfare(data.cyberWarfare);
+  if (data.misinformation) buildMisinfoHub(data.misinformation);
+  if (data.refugees) buildRefugeeStats(data.refugees);
+  if (data.osintMedia) buildOsintGrid(data.osintMedia);
+
+  // Weapon comparison — build with weapons from data
+  if (data.weaponComparison) {
+    storedWeaponData = data.weaponComparison;
+    buildWeaponComparison(data.weaponComparison);
+  }
+
+  // ML Predictor — initialize and start live updates
+  if (data.mlPrediction) {
+    updateMLPredictor();
+    if (!window._mlInterval) {
+      window._mlInterval = setInterval(updateMLPredictor, 8000);
+    }
+  }
 
   // Start live humanitarian drift every 90 seconds
   if (!window._humanInterval) {
     window._humanInterval = setInterval(updateHumanitarianTicker, 90000);
   }
-  
-  if (data.glossary) buildGlossary(data.glossary);
 
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('app').style.opacity = '1';
@@ -1179,11 +1197,10 @@ function render(data) {
   initMap(data);
   initCharts(data);
   
-  // Diagnostic log
   console.log('=== RENDER COMPLETE ===');
-  console.log('appData.weaponComparison:', appData?.weaponComparison ? '✓ Available' : '✗ Missing');
-  console.log('Grid element:', document.getElementById('weaponComparisonGrid') ? '✓ Found' : '✗ Missing');
-  console.log('Grid content:', document.getElementById('weaponComparisonGrid')?.innerHTML?.length || 0, 'characters');
+  console.log('weaponComparison:', appData?.weaponComparison ? '✓' : '✗');
+  console.log('mlPrediction:', appData?.mlPrediction ? '✓' : '✗');
+  console.log('cyberWarfare:', appData?.cyberWarfare ? '✓' : '✗');
 }
 
 async function loadData() {
