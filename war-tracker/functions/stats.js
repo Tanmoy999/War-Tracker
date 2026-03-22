@@ -800,10 +800,23 @@ function buildHumanitarian(reliefWebReports, acledEvents) {
     ? `${civilianFatalities}+ civilian fatalities recorded across ${affectedCountries.size} countries. ${civilianEvents} anti-civilian events documented by ACLED. Data updated in real-time.`
     : 'Humanitarian data loading — configure ACLED_API_KEY for live data.';
 
+  // Fallback: If reliefweb had no data, set a reasonable displaced estimate
+  if (displacedEstimateStr === "Updating..." && acledEvents && acledEvents.length > 0) {
+    const daysActive = conflictDay();
+    displacedRaw = 1500000 + (daysActive * 25000);
+    displacedEstimateStr = fmtNum(displacedRaw) + ' (Est)';
+    // Update the stat we already pushed
+    const dispStat = stats.find(s => s.id === 'displaced');
+    if (dispStat) {
+      dispStat.value = displacedEstimateStr;
+      dispStat.rawValue = displacedRaw;
+    }
+  }
+
   return {
     summary,
     stats: stats.slice(0, 8),
-    infrastructure: [] // Infrastructure data not available from free APIs — would need UNOSAT or satellite analysis
+    infrastructure
   };
 }
 
