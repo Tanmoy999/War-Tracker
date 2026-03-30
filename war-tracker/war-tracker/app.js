@@ -575,14 +575,18 @@ function buildCyberWarfare(cyber) {
 function buildMisinfoHub(misinfo) {
   const el = document.getElementById('misinfoGrid');
   if (el && misinfo) {
-    el.innerHTML = misinfo.map((m, i) => `
+    el.innerHTML = misinfo.map((m, i) => {
+      const badgeClass = m.status.toLowerCase().split(' ')[0]; // 'under investigation' → 'under'
+      return `
       <div class="misinfo-item" style="animation-delay:${i * 0.05}s">
-        <div class="misinfo-badge ${m.status.toLowerCase()}">${m.status}</div>
+        <div class="misinfo-badge ${badgeClass}">${m.status}</div>
         <div class="misinfo-content">
           <div class="misinfo-claim">"${m.claim}"</div>
           <div class="misinfo-fact">${m.fact}</div>
+          ${m.date ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--cyan);margin-top:6px;letter-spacing:0.08em;">${m.date}</div>` : ''}
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 }
 
@@ -598,19 +602,217 @@ function buildRefugeeStats(refugees) {
   }
 }
 
-function buildOsintGrid(osint) {
-  const el = document.getElementById('osintGrid');
-  if (el && osint) {
-    el.innerHTML = osint.map((o, i) => `
-      <div class="osint-item" style="animation-delay:${i * 0.05}s" onclick="window.open('${o.sourceUrl}', '_blank')">
-        <div class="osint-bg" style="background-image:url('${o.image}')"></div>
-        <div class="osint-blur">
-          <div class="osint-icon">⚠️</div>
-          <div class="osint-warning">Verified OSINT<br/>Click to view source</div>
-        </div>
-        <div class="osint-meta">${o.date} — ${o.location}</div>
-      </div>`).join('');
+// ─── SANCTIONS TRACKER ────────────────────────────────────
+function buildSanctionsSection(sanctions) {
+  const el = document.getElementById('sanctionsGrid');
+  if (!el || !sanctions) return;
+
+  let html = '';
+
+  // Summary
+  html += `<div class="sanctions-summary">${sanctions.summary}</div>`;
+
+  // Regime cards
+  html += '<div class="sanctions-regimes">';
+  sanctions.regimes.forEach((r, i) => {
+    html += `<div class="sanction-regime-card ${r.color}" style="animation-delay:${i*0.06}s">
+      <div class="sr-header">
+        <span class="sr-imposer">${r.imposer}</span>
+        <span class="sr-status ${r.status.toLowerCase()}">${r.status}</span>
+      </div>
+      <div class="sr-count">${r.count.toLocaleString()}</div>
+      <div class="sr-label">Active Sanctions</div>
+      <div class="sr-targets">${r.targets}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Impact meters
+  html += '<div class="sanctions-impact">';
+  const impacts = [
+    { label: 'Trade Reduction', value: sanctions.impact.tradeReduction, color: '#e63946' },
+    { label: 'Oil Export Drop', value: sanctions.impact.oilExportDrop, color: '#f4a261' },
+    { label: 'Currency Decline', value: sanctions.impact.currencyDecline, color: '#e9c46a' },
+    { label: 'Banking Isolation', value: sanctions.impact.bankingIsolation, color: '#48cae4' }
+  ];
+  impacts.forEach(imp => {
+    html += `<div class="impact-bar-item">
+      <div class="impact-label"><span>${imp.label}</span><span style="color:${imp.color};font-weight:700;">${imp.value}%</span></div>
+      <div class="impact-bar-track"><div class="impact-bar-fill" style="width:${imp.value}%;background:${imp.color};transition:width 1.2s ease;"></div></div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Recent actions
+  if (sanctions.recentActions && sanctions.recentActions.length > 0) {
+    html += '<div class="sanctions-recent"><div class="sr-recent-title">Recent Sanctions Actions</div>';
+    sanctions.recentActions.forEach(a => {
+      html += `<div class="sr-action"><span class="sr-action-date">${a.date}</span><span class="sr-action-title">${a.title}</span><span class="sr-action-source">${a.source}</span></div>`;
+    });
+    html += '</div>';
   }
+
+  el.innerHTML = html;
+}
+
+// ─── NUCLEAR THREAT DASHBOARD ────────────────────────────
+function buildNuclearSection(nuclear) {
+  const el = document.getElementById('nuclearGrid');
+  if (!el || !nuclear) return;
+
+  const tl = nuclear.threatLevel;
+  const segments = [1,2,3,4,5];
+
+  let html = '';
+
+  // Threat gauge
+  html += `<div class="nuclear-gauge-wrap">`;
+  html += `<div class="nuclear-gauge">`;
+  segments.forEach(s => {
+    const colors = ['','#48cae4','#e9c46a','#f4a261','#e63946','#ff0040'];
+    const active = s <= tl;
+    html += `<div class="gauge-segment ${active ? 'active' : ''}" style="${active ? 'background:'+colors[s]+';box-shadow:0 0 12px '+colors[s]+'80;' : ''}"></div>`;
+  });
+  html += `</div>`;
+  html += `<div class="nuclear-threat-label" style="color:var(--${nuclear.threatColor});">${nuclear.threatLabel}</div>`;
+  html += `<div class="nuclear-threat-desc">${nuclear.threatDesc}</div>`;
+  html += `</div>`;
+
+  // Enrichment status
+  html += `<div class="enrichment-panel">`;
+  html += `<div class="enrich-title">☢️ Iran Enrichment Status</div>`;
+  const es = nuclear.enrichmentStatus;
+  html += `<div class="enrich-grid">`;
+  html += `<div class="enrich-item"><div class="enrich-val" style="color:var(--red);">${es.currentLevel}</div><div class="enrich-key">Current Level</div></div>`;
+  html += `<div class="enrich-item"><div class="enrich-val" style="color:var(--orange);">${es.weaponGrade}</div><div class="enrich-key">Weapon Grade</div></div>`;
+  html += `<div class="enrich-item"><div class="enrich-val" style="color:var(--red);">${es.breakoutTime}</div><div class="enrich-key">Breakout Time</div></div>`;
+  html += `<div class="enrich-item"><div class="enrich-val" style="color:var(--cyan);">${es.stockpile}</div><div class="enrich-key">HEU Stockpile</div></div>`;
+  html += `</div></div>`;
+
+  // Facilities
+  html += `<div class="nuclear-facilities">`;
+  nuclear.facilities.forEach((f, i) => {
+    const statusColor = f.status === 'Damaged' || f.status === 'Struck' ? 'var(--red)' : f.status === 'Hardened' ? 'var(--orange)' : 'var(--cyan)';
+    html += `<div class="facility-card" style="animation-delay:${i*0.06}s">
+      <div class="facility-header"><span class="facility-icon">${f.icon}</span><span class="facility-name">${f.name}</span></div>
+      <div class="facility-status" style="color:${statusColor};">${f.status}</div>
+      <div class="facility-desc">${f.desc}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  el.innerHTML = html;
+}
+
+// ─── DIPLOMACY TRACKER ───────────────────────────────────
+function buildDiplomacySection(diplomacy) {
+  const el = document.getElementById('diplomacyGrid');
+  if (!el || !diplomacy) return;
+
+  let html = '';
+
+  // Overall status
+  html += `<div class="diplo-status-bar">
+    <div class="diplo-status-label">Diplomatic Status</div>
+    <div class="diplo-status-value" style="color:var(--${diplomacy.statusColor});">${diplomacy.overallStatus}</div>
+    <div class="diplo-summary">${diplomacy.summary}</div>
+  </div>`;
+
+  // Proposals
+  html += '<div class="diplo-proposals">';
+  diplomacy.proposals.forEach((p, i) => {
+    html += `<div class="diplo-proposal" style="animation-delay:${i*0.05}s">
+      <div class="diplo-prop-header">
+        <span class="diplo-prop-title">${p.title}</span>
+        <span class="diplo-prop-badge ${p.statusColor}">${p.status}</span>
+      </div>
+      <div class="diplo-prop-by">${p.proposedBy} · ${p.date}</div>
+      <div class="diplo-prop-desc">${p.desc}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Mediators
+  html += '<div class="diplo-mediators"><div class="diplo-med-title">Active Mediators & Stakeholders</div><div class="diplo-med-grid">';
+  diplomacy.mediators.forEach(m => {
+    html += `<div class="diplo-mediator ${m.active ? 'active' : 'inactive'}">
+      <span class="diplo-med-country">${m.country}</span>
+      <span class="diplo-med-role">${m.role}</span>
+      <span class="diplo-med-status">${m.active ? '● Active' : '○ Inactive'}</span>
+    </div>`;
+  });
+  html += '</div></div>';
+
+  // UN Votes
+  const uv = diplomacy.unVotes;
+  html += `<div class="diplo-un-votes">
+    <div class="un-vote-title">UN Security Council Votes</div>
+    <div class="un-vote-grid">
+      <div class="un-vote-item"><div class="un-vote-num">${uv.total}</div><div class="un-vote-label">Total</div></div>
+      <div class="un-vote-item cyan"><div class="un-vote-num">${uv.passed}</div><div class="un-vote-label">Passed</div></div>
+      <div class="un-vote-item red"><div class="un-vote-num">${uv.vetoed}</div><div class="un-vote-label">Vetoed</div></div>
+      <div class="un-vote-item yellow"><div class="un-vote-num">${uv.abstained}</div><div class="un-vote-label">Abstained</div></div>
+    </div>
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+// ─── SOCIAL MEDIA PULSE ──────────────────────────────────
+function buildSocialPulseSection(pulse) {
+  const el = document.getElementById('socialPulseGrid');
+  if (!el || !pulse) return;
+
+  let html = '';
+
+  // Summary + sentiment
+  const s = pulse.globalSentiment;
+  html += `<div class="pulse-sentiment">
+    <div class="pulse-tone-wrap">
+      <div class="pulse-tone-label">Global Media Tone</div>
+      <div class="pulse-tone-value" style="color:var(--${s.toneColor});">${s.toneLabel}</div>
+      <div class="pulse-tone-score">${s.avgTone}</div>
+    </div>
+    <div class="pulse-coverage">
+      <div class="pulse-cov-label">Coverage Framing</div>
+      <div class="pulse-cov-bar">
+        <div class="pulse-cov-fill iran" style="width:${pulse.coverageSplit.proIran}%;"><span>🇮🇷 ${pulse.coverageSplit.proIran}%</span></div>
+        <div class="pulse-cov-fill neutral" style="width:${pulse.coverageSplit.neutral}%;"></div>
+        <div class="pulse-cov-fill israel" style="width:${pulse.coverageSplit.proIsrael}%;"><span>🇮🇱 ${pulse.coverageSplit.proIsrael}%</span></div>
+      </div>
+    </div>
+  </div>`;
+
+  // Trending hashtags
+  html += '<div class="pulse-hashtags">';
+  pulse.trendingHashtags.forEach(h => {
+    html += `<span class="pulse-tag ${h.heat}">${h.tag}</span>`;
+  });
+  html += '</div>';
+
+  // Trending topics
+  if (pulse.trendingTopics && pulse.trendingTopics.length > 0) {
+    html += '<div class="pulse-topics">';
+    const maxMentions = Math.max(...pulse.trendingTopics.map(t => t.mentions));
+    pulse.trendingTopics.forEach(t => {
+      const pct = (t.mentions / maxMentions * 100).toFixed(0);
+      const color = t.heat === 'hot' ? '#e63946' : t.heat === 'warm' ? '#f4a261' : '#48cae4';
+      html += `<div class="pulse-topic">
+        <span class="pulse-topic-name">${t.topic}</span>
+        <div class="pulse-topic-bar"><div class="pulse-topic-fill" style="width:${pct}%;background:${color};"></div></div>
+        <span class="pulse-topic-count">${t.mentions}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Article volume
+  html += `<div class="pulse-volume">
+    <span class="pulse-vol-num">${pulse.articleVolume}</span>
+    <span class="pulse-vol-label">articles tracked in current cycle</span>
+  </div>`;
+
+  el.innerHTML = html;
 }
 
 function buildGlossary(glossary) {
@@ -1170,7 +1372,10 @@ function render(data) {
   if (data.cyberWarfare) buildCyberWarfare(data.cyberWarfare);
   if (data.misinformation) buildMisinfoHub(data.misinformation);
   if (data.refugees) buildRefugeeStats(data.refugees);
-  if (data.osintMedia) buildOsintGrid(data.osintMedia);
+  if (data.sanctions) buildSanctionsSection(data.sanctions);
+  if (data.nuclearDashboard) buildNuclearSection(data.nuclearDashboard);
+  if (data.diplomacy) buildDiplomacySection(data.diplomacy);
+  if (data.socialPulse) buildSocialPulseSection(data.socialPulse);
 
   // Weapon comparison — build with weapons from data
   if (data.weaponComparison) {
