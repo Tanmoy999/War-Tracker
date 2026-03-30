@@ -1,7 +1,7 @@
 [build]
   publish = "war-tracker/war-tracker"
   command = ""
-  functions = "war-tracker/functions"
+  functions = "war-tracker/war-tracker/netlify/functions"
 
 # Redirect rules
 [[redirects]]
